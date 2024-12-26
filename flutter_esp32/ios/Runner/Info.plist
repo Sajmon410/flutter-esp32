@@ -2,10 +2,23 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Your location is needed to store the photo location</string>
+	<string>Ova aplikacija koristi vašu lokaciju za čuvanje slike sa GPS koordinatama.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Ova aplikacija treba dozvolu za čuvanje slike u galeriji.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Potreban je pristup za čuvanje slika u galeriji.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Permission to save photo to gallery</string>
+	<string>Potreban je pristup za čitanje slika iz galerije.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Potreban je pristup trenutnoj lokaciji.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Potreban je pristup lokaciji u pozadini.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

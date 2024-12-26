@@ -59,6 +59,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: CameraScreen(),
     );
   }
@@ -127,7 +128,12 @@ class _CameraScreenState extends State<CameraScreen> {
 
       if (result['isSuccess']) {
         print('Slika uspešno sačuvana!');
-
+         ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Slika je uspešno sačuvana u galeriji!'),
+            duration: Duration(seconds: 2),
+          ),
+        );
         // Sačuvaj informacije o lokaciji sa slikom (ako je potrebno)
         print('Lokacija: Latitude: ${position.latitude}, Longitude: ${position.longitude}');
       } else {
