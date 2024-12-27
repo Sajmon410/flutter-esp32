@@ -1,5 +1,5 @@
 # Uncomment this line to define a global platform for your project
-# platform :ios, '12.0'
+platform :ios, '12.0' # Preporučujem da ostane otkomentarisano i postavljeno na verziju 12.0 ili noviju.
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -32,13 +32,29 @@ target 'Runner' do
   use_modular_headers!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+
+  # Target za testove
   target 'RunnerTests' do
     inherit! :search_paths
   end
 end
 
+# Podešavanja za dozvole (permission_handler)
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+
+    # Dodajemo podršku za određene dozvole
+    target.build_configurations.each do |config|
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
+        '$(inherited)',
+        ## Dozvole koje će aplikacija koristiti
+        'PERMISSION_PHOTOS=1',          # Pristup fotografijama
+        'PERMISSION_LOCATION=1',       # Lokacija
+        'PERMISSION_CAMERA=1',         # Kamera
+        'PERMISSION_MICROPHONE=0',     # Mikrofon - isključeno
+        'PERMISSION_MEDIA_LIBRARY=0'   # Media biblioteka - isključeno
+      ]
+    end
   end
 end

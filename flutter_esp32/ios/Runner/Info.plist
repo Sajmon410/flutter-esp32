@@ -6,19 +6,23 @@
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>192.168.0.7</key>
+			<dict>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+				<key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+		</dict>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Ova aplikacija koristi vašu lokaciju za čuvanje slike sa GPS koordinatama.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Ova aplikacija treba dozvolu za čuvanje slike u galeriji.</string>
+	<string>Potreban je pristup trenutnoj lokaciji.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Potreban je pristup za čuvanje slika u galeriji.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Potreban je pristup za čitanje slika iz galerije.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Potreban je pristup trenutnoj lokaciji.</string>
-	<key>NSLocationAlwaysUsageDescription</key>
-	<string>Potreban je pristup lokaciji u pozadini.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

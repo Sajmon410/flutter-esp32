@@ -1,56 +1,30 @@
 import 'dart:typed_data'; // Za rad sa bajtovima
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'dart:async'; // Za otkazivanje operacija
 import 'package:geolocator/geolocator.dart'; // Za lokaciju
-import 'package:image_gallery_saver/image_gallery_saver.dart'; // Za snimanje u galeriju
+import 'package:photo_manager/photo_manager.dart'; // Za rad sa galerijom
+
+// Dodati VLC Player
+import 'package:flutter_vlc_player/flutter_vlc_player.dart';
 
 void main() {
   runApp(MyApp());
 }
 
 class CameraControl {
-  final String baseHost = 'http://192.168.0.7'; // Zameniti sa stvarnim URL-om
+  final String baseHost = 'http://192.168.0.7';
 
   // Funkcija za uzimanje slike (Get Still)
   Future<Uint8List?> getStill() async {
     final url = Uri.parse('$baseHost/capture?_cb=${DateTime.now().millisecondsSinceEpoch}');
-    final response = await http.get(url); // HTTP GET zahtev
+    final response = await http.get(url);
 
     if (response.statusCode == 200) {
-      return response.bodyBytes; // Vraća bajtove slike
+      return response.bodyBytes;
     } else {
       print('Failed to capture still image');
-      return null; // U slučaju greške vraća null
-    }
-  }
-
-  // Funkcija za pokretanje stream-a
-  Future<void> startStream() async {
-    final url = Uri.parse('$baseHost:81/stream');  // Proveriti ispravan URL za stream
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      print('Stream started');
-    } else {
-      print('Failed to start stream');
-      print('Status Code: ${response.statusCode}');
-      print('Response Body: ${response.body}');
-    }
-  }
-
-  // Funkcija za zaustavljanje stream-a
-  Future<void> stopStream() async {
-    final url = Uri.parse('$baseHost:81/stop_stream'); // Proveriti URL za zaustavljanje stream-a
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      print('Stream stopped');
-    } else {
-      print('Failed to stop stream');
-      print('Status Code: ${response.statusCode}');
-      print('Response Body: ${response.body}');
+      return null;
     }
   }
 }
@@ -72,44 +46,99 @@ class CameraScreen extends StatefulWidget {
 
 class _CameraScreenState extends State<CameraScreen> {
   final CameraControl cameraControl = CameraControl();
-  bool _isLoading = false; // Indikator za učitavanje
-  Uint8List? _imageBytes; // Promenljiva za čuvanje slike
-  bool _imageCaptured = false; // Oznaka da li je slika preuzeta
-  bool _isStreaming = false; // Oznaka da li je stream aktivan
-  bool _isCanceling = false; // Oznaka da li se operacija otkazuje
+  bool _isLoading = false;
+  Uint8List? _imageBytes;
+  bool _imageCaptured = false;
+  bool _isStreaming = false;
+  bool _isVlcInitialized = false; // Flag za status inicijalizacije VLC kontrolera
 
-  // Funkcija za izvršavanje operacija sa indikatorom učitavanja
+  // VLC Controller za stream
+  late VlcPlayerController _vlcController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Kreiranje kontrolera sa URL-om za stream
+    _vlcController = VlcPlayerController.network(
+      'http://192.168.0.7:81/stream', // URL za live stream
+      hwAcc: HwAcc.auto, // Hardversko ubrzanje
+      autoPlay: false, // Ne automatski start stream-a
+    );
+
+    // Dodavanje kašnjenja za inicijalizaciju i proveru statusa
+    Future.delayed(Duration(seconds: 5), () {
+      if (_vlcController.value.isInitialized) {
+        setState(() {
+          _isVlcInitialized = true;
+        });
+        print("VLC je uspešno inicijalizovan!");
+      } else {
+        print("VLC nije inicijalizovan! Pokušajte ponovo.");
+        // Ponovo pokušajte da inicijalizujete
+        _initializeVlcController();
+      }
+    });
+
+    // Listener za greške tokom inicijalizacije
+    _vlcController.addListener(() {
+      if (!_vlcController.value.isInitialized) {
+        print("VLC nije inicijalizovan!");
+        print("Greška: ${_vlcController.value.errorDescription}");
+      } else {
+        print("VLC kontroler je inicijalizovan.");
+      }
+    });
+  }
+
+  void _initializeVlcController() {
+    print("Pokušavam ponovo da inicijalizujem VLC kontroler...");
+    _vlcController = VlcPlayerController.network(
+      'http://192.168.0.7:81/stream', // URL za live stream
+      hwAcc: HwAcc.auto, // Hardversko ubrzanje
+      autoPlay: false, // Ne automatski start stream-a
+    );
+    Future.delayed(Duration(seconds: 5), () {
+      if (_vlcController.value.isInitialized) {
+        setState(() {
+          _isVlcInitialized = true;
+        });
+        print("VLC je uspešno inicijalizovan!");
+      } else {
+        print("VLC još uvek nije inicijalizovan!");
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _vlcController.dispose(); // Oslobađa resurse
+    super.dispose();
+  }
+
   Future<void> executeWithLoading(Future<void> Function() action) async {
     setState(() {
-      _isLoading = true; // Početak učitavanja
-      _isCanceling = false; // Resetujemo status otkazivanja
+      _isLoading = true;
     });
 
     try {
-      await action(); // Izvršava akciju
+      await action();
     } catch (e) {
-      if (_isCanceling) {
-        print('Operacija je otkazana');
-      } else {
-        print("Greška: $e");
-      }
+      print("Greška: $e");
     } finally {
       setState(() {
-        _isLoading = false; // Kraj učitavanja
+        _isLoading = false;
       });
     }
   }
 
-  // Funkcija za preuzimanje slike
   Future<void> _captureStillImage() async {
-    if (_isLoading || _isCanceling) return; // Ako je već u toku učitavanje ili operacija se otkazuje
-
     await executeWithLoading(() async {
       final image = await cameraControl.getStill();
       if (image != null) {
         setState(() {
-          _imageBytes = image; // Čuva preuzetu sliku
-          _imageCaptured = true; // Obeležava da je slika preuzeta
+          _imageBytes = image;
+          _imageCaptured = true;
         });
       } else {
         print('Greška pri preuzimanju slike');
@@ -117,93 +146,24 @@ class _CameraScreenState extends State<CameraScreen> {
     });
   }
 
-  // Funkcija za snimanje slike u galeriju
-  Future<void> _takePhoto() async {
-    if (_imageBytes != null) {
-      // Snimanje slike u galeriju
-      final result = await ImageGallerySaver.saveImage(Uint8List.fromList(_imageBytes!));
+  Future<void> _saveImage(Uint8List imageBytes) async {
+    String filename = 'moja_slika_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final result = await PhotoManager.editor.saveImage(
+      imageBytes,
+      filename: filename,
+    );
 
-      // Dohvatanje trenutne lokacije
-      Position position = await _getCurrentLocation();
-
-      if (result['isSuccess']) {
-        print('Slika uspešno sačuvana!');
-         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Slika je uspešno sačuvana u galeriji!'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-        // Sačuvaj informacije o lokaciji sa slikom (ako je potrebno)
-        print('Lokacija: Latitude: ${position.latitude}, Longitude: ${position.longitude}');
-      } else {
-        print('Greška pri snimanju slike!');
-      }
+    if (result != null) {
+      print('Slika uspešno sačuvana!');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Slika je sačuvana u galeriji!'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      print('Greška pri snimanju slike!');
     }
-  }
-
-  // Funkcija za dobijanje trenutne lokacije
-  Future<Position> _getCurrentLocation() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    // Provera da li je omogućena lokacija
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return Future.error('Lokacijske usluge nisu omogućene');
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return Future.error('Dozvola za lokaciju je odbijena');
-      }
-    }
-
-    // Dobijanje trenutne lokacije
-    return await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-  }
-
-  // Funkcija za pokretanje stream-a
-  Future<void> _startStream() async {
-    if (_isLoading || _isStreaming || _isCanceling) return; // Ako je već u toku učitavanje ili stream je aktivan
-
-    await executeWithLoading(() async {
-      await cameraControl.startStream();
-      setState(() {
-        _isStreaming = true; // Postavlja status stream-a na aktivan
-      });
-    });
-  }
-
-  // Funkcija za zaustavljanje stream-a i otkazivanje operacija
-  Future<void> _stopStream() async {
-    if (_isLoading || !_isStreaming || _isCanceling) return; // Ako nije aktivan stream ili je otkazivanje u toku
-
-    setState(() {
-      _isCanceling = true; // Postavlja status otkazivanja
-      _isLoading = true; // Pokreće indikator učitavanja dok se zaustavlja stream
-    });
-
-    try {
-      await cameraControl.stopStream(); // Zaustavljanje stream-a
-      setState(() {
-        _isStreaming = false; // Postavlja status stream-a na neaktivan
-      });
-    } catch (e) {
-      print("Greška pri zaustavljanju stream-a: $e");
-    } finally {
-      setState(() {
-        _isCanceling = false; // Završava otkazivanje
-        _isLoading = false; // Kraj učitavanja
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 
   @override
@@ -216,47 +176,60 @@ class _CameraScreenState extends State<CameraScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Prikaz slike ako postoji
             if (_imageBytes != null) ...[
-              Image.memory(_imageBytes!), // Prikazivanje preuzete slike
+              Image.memory(_imageBytes!),
               SizedBox(height: 20),
             ],
 
-            // Prikazivanje indikatora učitavanja ako je _isLoading true
             if (_isLoading) ...[
-              CircularProgressIndicator(), // Indikator učitavanja
+              CircularProgressIndicator(),
               SizedBox(height: 20),
             ],
 
-            // Dugme za preuzimanje slike
             ElevatedButton(
-              onPressed: _captureStillImage, // Klik za preuzimanje slike
+              onPressed: _captureStillImage,
               child: Text('Get Still'),
             ),
-            
-            // Dugme za snimanje slike sa lokacijom
+
             if (_imageCaptured) ...[
               ElevatedButton(
-                onPressed: _takePhoto, // Sačuvaj sliku u galeriji sa lokacijom
-                child: Text('Take a Photo'),
+                onPressed: () => _saveImage(_imageBytes!),
+                child: Text('Save Image'),
               ),
             ],
 
-            // Dugme za pokretanje stream-a, prikazuje se samo nakon što je slika preuzeta
-            if (_imageCaptured && !_isStreaming) ...[
-              ElevatedButton(
-                onPressed: _startStream, // Pokretanje stream-a
-                child: Text('Start Stream'),
+            // Prikaz Live Stream-a
+            if (_isVlcInitialized) ...[
+              Container(
+                height: 300,
+                child: VlcPlayer(
+                  controller: _vlcController,
+                  aspectRatio: 16 / 9,
+                  placeholder: Center(child: CircularProgressIndicator()),
+                ),
               ),
             ],
 
-            // Dugme za zaustavljanje stream-a, prikazuje se čak i kada se učitava
-            if (_isStreaming || _isLoading) ...[
-              ElevatedButton(
-                onPressed: _stopStream, // Zaustavljanje stream-a
-                child: Text('Stop Stream'),
-              ),
-            ],
+            // Dugme za pokretanje stream-a
+            ElevatedButton(
+              onPressed: () {
+                if (_vlcController.value.isInitialized) {
+                  setState(() {
+                    _isStreaming = !_isStreaming; // Menja status stream-a
+                  });
+                  if (_isStreaming) {
+                    _vlcController.play();
+                    print("Stream pokrenut");
+                  } else {
+                    _vlcController.stop();
+                    print("Stream zaustavljen");
+                  }
+                } else {
+                  print("VLC nije inicijalizovan. Molimo pokušajte ponovo.");
+                }
+              },
+              child: Text(_isStreaming ? 'Stop Stream' : 'Start Stream'),
+            ),
           ],
         ),
       ),
