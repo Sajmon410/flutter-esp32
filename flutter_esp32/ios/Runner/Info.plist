@@ -27,8 +27,9 @@
 
     <!-- Lokacija -->
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>Potreban je pristup trenutnoj lokaciji.</string>
-
+    <string>Potrebna nam je vaša lokacija za dodavanje GPS podataka u slike.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>Potrebna nam je dozvola za korišćenje GPS lokacije.</string>
     <!-- Galerija slika -->
     <key>NSPhotoLibraryUsageDescription</key>
     <string>Potreban je pristup za čitanje slika iz galerije.</string>

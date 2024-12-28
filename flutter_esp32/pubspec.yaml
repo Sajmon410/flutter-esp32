@@ -45,6 +45,10 @@ dependencies:
   video_player: ^2.8.2
   photo_manager: ^3.0.0
   flutter_vlc_player: ^7.4.2
+  location: ^5.0.3
+  geocoding: ^2.1.0
+  exif: ^2.0.0
+  rational: ^2.2.3
 dev_dependencies:
   flutter_test:
     sdk: flutter
