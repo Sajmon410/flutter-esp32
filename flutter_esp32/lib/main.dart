@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:photo_manager/photo_manager.dart'; // Rad sa galerijom
 import 'package:location/location.dart' as loc; // GPS lokacija
-import 'package:image/image.dart' as img; // Rad sa slikama i EXIF metapodacima
-import 'package:flutter_vlc_player/flutter_vlc_player.dart'; // VLC Player za stream
+import 'package:image/image.dart' as img; // Rad sa slikama
 import 'package:exif/exif.dart'; // EXIF biblioteka za metapodatke
+import 'package:flutter_mjpeg/flutter_mjpeg.dart'; // MJPEG paket
 
 void main() {
   runApp(const MyApp());
@@ -61,10 +61,6 @@ class _CameraScreenState extends State<CameraScreen> {
   bool _isLoading = false;
   Uint8List? _imageBytes;
   bool _imageCaptured = false;
-  bool _isStreaming = false;
-
-  // VLC Player Controller
-  late VlcPlayerController _vlcController;
 
   // Lokacija
   loc.Location location = loc.Location();
@@ -75,28 +71,6 @@ class _CameraScreenState extends State<CameraScreen> {
 
     // Provera konekcije
     testConnection();
-
-    // Inicijalizacija VLC kontrolera
-    _vlcController = VlcPlayerController.network(
-      'http://192.168.0.7:81/stream', // Port 81 za stream
-      hwAcc: HwAcc.disabled, // Hardversko ubrzanje
-      autoPlay: false, // Ne startuje automatski
-      options: VlcPlayerOptions(),
-    );
-
-    _vlcController.addListener(() {
-      if (_vlcController.value.isInitialized) {
-        print("VLC je uspešno inicijalizovan.");
-      } else {
-        print("VLC još uvek nije inicijalizovan!");
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _vlcController.dispose(); // Oslobađa resurse
-    super.dispose();
   }
 
   // Provera mrežne konekcije
@@ -111,12 +85,12 @@ class _CameraScreenState extends State<CameraScreen> {
     }
   }
 
-  // Funkcija za proveru dozvola za GPS
+  // Provera GPS dozvola
   Future<bool> _checkPermissions() async {
     bool serviceEnabled;
     loc.PermissionStatus permissionGranted;
 
-    // Proveri da li je GPS omogućen
+    // Proveri GPS servis
     serviceEnabled = await location.serviceEnabled();
     if (!serviceEnabled) {
       serviceEnabled = await location.requestService();
@@ -174,24 +148,24 @@ class _CameraScreenState extends State<CameraScreen> {
       bool permissionsOk = await _checkPermissions();
       if (!permissionsOk) return;
 
-      // 1. Preuzimanje GPS lokacije
+      // GPS lokacija
       final loc.LocationData locationData = await location.getLocation();
       final double latitude = locationData.latitude ?? 0.0;
       final double longitude = locationData.longitude ?? 0.0;
 
       print('GPS lokacija: $latitude, $longitude');
 
-      // 2. Učitavanje slike
+      // Učitavanje slike
       final img.Image? originalImage = img.decodeImage(imageBytes);
       if (originalImage == null) {
         print('Greška pri učitavanju slike.');
         return;
       }
 
-      // 3. Kodiranje slike
+      // Kodiranje slike
       final Uint8List encodedImage = Uint8List.fromList(img.encodeJpg(originalImage));
 
-      // 4. Snimanje slike u galeriju
+      // Snimanje slike u galeriju
       final AssetEntity? result = await PhotoManager.editor.saveImage(
         encodedImage,
         filename: 'moja_slika_${DateTime.now().millisecondsSinceEpoch}.jpg',
@@ -210,25 +184,6 @@ class _CameraScreenState extends State<CameraScreen> {
     }
   }
 
-  // Start/stop stream funkcija
-  void _startStopStream() async {
-    setState(() {
-      _isStreaming = !_isStreaming;
-    });
-
-    if (_isStreaming) {
-      if (_vlcController.value.isInitialized) {
-        _vlcController.play();
-      } else {
-        setState(() {
-          _isStreaming = false;
-        });
-      }
-    } else {
-      _vlcController.stop();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -237,14 +192,53 @@ class _CameraScreenState extends State<CameraScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (_imageBytes != null) Image.memory(_imageBytes!),
-            if (_isLoading) const CircularProgressIndicator(),
-            ElevatedButton(onPressed: _captureStillImage, child: const Text('Get Still')),
-            if (_imageCaptured) ElevatedButton(
-              onPressed: () => _saveImageWithLocation(_imageBytes!),
-              child: const Text('Save Image'),
+            if (_imageBytes != null) Image.memory(_imageBytes!), // Prikaz slike
+            if (_isLoading) const CircularProgressIndicator(), // Indikator učitavanja
+
+            // Dugme za hvatanje slike
+            ElevatedButton(
+              onPressed: _captureStillImage,
+              child: const Text('Get Still'),
+            ),
+
+            // Dugme za čuvanje slike sa GPS lokacijom
+            if (_imageCaptured)
+              ElevatedButton(
+                onPressed: () => _saveImageWithLocation(_imageBytes!),
+                child: const Text('Save Image'),
+              ),
+
+            // Dugme za pokretanje MJPEG strima
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => StreamScreen(),
+                  ),
+                );
+              },
+              child: const Text('Start Stream'),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// Klasa za MJPEG strim
+class StreamScreen extends StatelessWidget {
+  const StreamScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('ESP32 Stream')),
+      body: Center(
+        child: Mjpeg(
+          stream: 'http://192.168.0.7:81/stream', // Promeni IP ako je drugačiji
+          isLive: true,
         ),
       ),
     );
