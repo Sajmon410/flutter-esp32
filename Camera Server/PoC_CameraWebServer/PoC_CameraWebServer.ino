@@ -80,7 +80,7 @@ int n = WiFi.scanNetworks();
     config.frame_size = FRAMESIZE_SVGA;
     config.jpeg_quality = 12;
     config.fb_count = 10;
-
+/Users/simonradosavljevic/Desktop/Diplomski/novi/flutter-esp32/Camera Server/PoC_CameraWebServer/app_httpd.cpp
 
   // camera init
   esp_err_t err = esp_camera_init(&config);

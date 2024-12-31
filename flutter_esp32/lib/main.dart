@@ -1,13 +1,12 @@
 import 'dart:typed_data'; // Rad sa bajtovima
 import 'dart:io'; // Provera konekcije
 import 'package:flutter/material.dart';
+import 'package:flutter_esp32/pages/map_screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:photo_manager/photo_manager.dart'; // Rad sa galerijom
 import 'package:location/location.dart' as loc; // GPS lokacija
-import 'package:image/image.dart' as img; // Rad sa slikama
-import 'package:exif/exif.dart'; // EXIF biblioteka za metapodatke
+import 'package:image/image.dart' as img; // Rad sa slikama// EXIF biblioteka za metapodatke
 import 'package:flutter_mjpeg/flutter_mjpeg.dart'; // MJPEG paket
-
 void main() {
   runApp(const MyApp());
 }
@@ -227,20 +226,43 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 }
 
-// Klasa za MJPEG strim
 class StreamScreen extends StatelessWidget {
-  const StreamScreen({Key? key}) : super(key: key);
+  const StreamScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('ESP32 Stream')),
       body: Center(
-        child: Mjpeg(
-          stream: 'http://192.168.0.7:81/stream', // Promeni IP ako je drugačiji
+         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [ 
+            Mjpeg(
+          stream: 'http://192.168.0.7:81/stream',
           isLive: true,
-        ),
-      ),
-    );
+            ),
+            
+        ElevatedButton(
+            onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Back'),
+            ),
+        // Dugme za otvaranje mape u aplikaciji
+          ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MapScreen(),
+                ),
+              );
+            },
+  child: const Text('Open Map'),
+),
+      ]),
+    )
+    )
+    ;
   }
 }

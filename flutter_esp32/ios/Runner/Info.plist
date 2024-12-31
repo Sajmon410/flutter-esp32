@@ -24,7 +24,7 @@
             </dict>
         </dict>
     </dict>
-
+    
     <!-- Lokacija -->
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>Potrebna nam je vaša lokacija za dodavanje GPS podataka u slike.</string>
