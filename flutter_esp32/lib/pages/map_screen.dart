@@ -1,74 +1,75 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 
+void main() => runApp(const MapScreen());
+
 class MapScreen extends StatefulWidget {
+  const MapScreen({super.key});
+
   @override
-  _MapScreenState createState() => _MapScreenState();
+  State<MapScreen> createState() => _MapScreenState();
 }
 
 class _MapScreenState extends State<MapScreen> {
-  GoogleMapController? _mapController;
-  Location _location = Location();
-  LatLng _currentPosition = const LatLng(44.7866, 20.4489); // Default lokacija
+  late GoogleMapController mapController;
+  late LocationData _currentLocation;
+  final Location _location = Location();
 
-  @override
-  void initState() {
-    super.initState();
-    _getUserLocation();
+  // Beograd koordinata
+  final LatLng _center = const LatLng(44.7866, 20.4489);
+
+  // Funkcija za čitanje GPS lokacije
+  Future<void> _getCurrentLocation() async {
+    try {
+      final LocationData currentLocation = await _location.getLocation();
+      setState(() {
+        _currentLocation = currentLocation;
+      });
+
+      // Pomeranje kamere na trenutnu lokaciju
+      mapController.animateCamera(
+        CameraUpdate.newLatLngZoom(
+          LatLng(currentLocation.latitude!, currentLocation.longitude!),
+          14.0,
+        ),
+      );
+    } catch (e) {
+      print('Error getting location: $e');
+    }
   }
 
-  // Uzimanje trenutne lokacije korisnika
-  Future<void> _getUserLocation() async {
-    bool serviceEnabled;
-    PermissionStatus permissionGranted;
-
-    // Provera da li je GPS uključen
-    serviceEnabled = await _location.serviceEnabled();
-    if (!serviceEnabled) {
-      serviceEnabled = await _location.requestService();
-      if (!serviceEnabled) {
-        return;
-      }
-    }
-
-    // Provera dozvola
-    permissionGranted = await _location.hasPermission();
-    if (permissionGranted == PermissionStatus.denied) {
-      permissionGranted = await _location.requestPermission();
-      if (permissionGranted != PermissionStatus.granted) {
-        return;
-      }
-    }
-
-    // Uzimanje trenutne lokacije
-    final locationData = await _location.getLocation();
-    setState(() {
-      _currentPosition =
-          LatLng(locationData.latitude ?? 0.0, locationData.longitude ?? 0.0);
-    });
-
-    // Fokusiranje kamere na trenutnu lokaciju
-    _mapController?.animateCamera(
-      CameraUpdate.newLatLngZoom(_currentPosition, 15),
-    );
+  // OnMapCreated funkcija
+  void _onMapCreated(GoogleMapController controller) {
+    mapController = controller;
+    _getCurrentLocation(); // Pozivanje GPS lokacije čim se mapa kreira
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Google Mapa')),
-      body: GoogleMap(
-        initialCameraPosition: CameraPosition(
-          target: _currentPosition,
-          zoom: 14.0,
+    return MaterialApp(
+       debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text('Google Map'),
+          backgroundColor: Colors.white,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () {
+              Navigator.of(context).pop(); // Dodavanje back dugmeta
+            },
+          ),
         ),
-        myLocationEnabled: true,
-        myLocationButtonEnabled: true,
-        mapType: MapType.normal,
-        onMapCreated: (GoogleMapController controller) {
-          _mapController = controller;
-        },
+        body: GoogleMap(
+          onMapCreated: _onMapCreated,
+          initialCameraPosition: CameraPosition(
+            target: _center, // Početna pozicija Beograd
+            zoom: 10.0,
+          ),
+          myLocationEnabled: true, // Omogućava prikaz trenutne lokacije korisnika
+          myLocationButtonEnabled: true, // Omogućava dugme za pretragu trenutne lokacije
+        ),
       ),
     );
   }

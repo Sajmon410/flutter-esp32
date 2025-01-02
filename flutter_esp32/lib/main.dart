@@ -219,6 +219,17 @@ class _CameraScreenState extends State<CameraScreen> {
               },
               child: const Text('Start Stream'),
             ),
+                    ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MapScreen(),
+                ),
+              );
+            },
+            child: const Text('Open Map'),
+          ),
           ],
         ),
       ),
@@ -249,17 +260,7 @@ class StreamScreen extends StatelessWidget {
               child: const Text('Back'),
             ),
         // Dugme za otvaranje mape u aplikaciji
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => MapScreen(),
-                ),
-              );
-            },
-  child: const Text('Open Map'),
-),
+  
       ]),
     )
     )
