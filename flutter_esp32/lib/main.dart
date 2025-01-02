@@ -186,7 +186,9 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('ESP32 Camera Control')),
+      appBar: AppBar(
+        title: const Text('ESP32 Camera Control'),
+        backgroundColor: Colors.deepPurple,),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -243,7 +245,10 @@ class StreamScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('ESP32 Stream')),
+      appBar: AppBar(
+        title: const Text('ESP32 Stream'),
+        backgroundColor: Colors.deepPurple,
+        ),
       body: Center(
          child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
