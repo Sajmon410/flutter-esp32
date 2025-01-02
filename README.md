@@ -5,4 +5,5 @@ Stream :white_check_mark:  <br />
 GPS :white_check_mark:  <br />
 Google Map :white_check_mark:  <br />
 
+Better UI, Showing image location on map, API_KEY not hiden
 In progress...
