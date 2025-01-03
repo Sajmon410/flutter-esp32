@@ -7,6 +7,7 @@ import 'package:photo_manager/photo_manager.dart'; // Rad sa galerijom
 import 'package:location/location.dart' as loc; // GPS lokacija
 import 'package:image/image.dart' as img; // Rad sa slikama// EXIF biblioteka za metapodatke
 import 'package:flutter_mjpeg/flutter_mjpeg.dart'; // MJPEG paket
+
 void main() {
   runApp(const MyApp());
 }
@@ -140,61 +141,94 @@ class _CameraScreenState extends State<CameraScreen> {
 
   // Čuvanje slike sa GPS lokacijom
   Future<void> _saveImageWithLocation(Uint8List imageBytes) async {
-    try {
-      print("Početak čuvanja slike...");
+  try {
+    print("Početak čuvanja slike...");
 
-      // Provera dozvola
-      bool permissionsOk = await _checkPermissions();
-      if (!permissionsOk) return;
-
-      // GPS lokacija
-      final loc.LocationData locationData = await location.getLocation();
-      final double latitude = locationData.latitude ?? 0.0;
-      final double longitude = locationData.longitude ?? 0.0;
-
-      print('GPS lokacija: $latitude, $longitude');
-
-      // Učitavanje slike
-      final img.Image? originalImage = img.decodeImage(imageBytes);
-      if (originalImage == null) {
-        print('Greška pri učitavanju slike.');
-        return;
-      }
-
-      // Kodiranje slike
-      final Uint8List encodedImage = Uint8List.fromList(img.encodeJpg(originalImage));
-
-      // Snimanje slike u galeriju
-      final AssetEntity? result = await PhotoManager.editor.saveImage(
-        encodedImage,
-        filename: 'moja_slika_${DateTime.now().millisecondsSinceEpoch}.jpg',
-      );
-
-      if (result != null) {
-        print('Slika sa GPS lokacijom sačuvana!');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Slika sa lokacijom je sačuvana!')),
-        );
-      } else {
-        print('Greška pri snimanju slike!');
-      }
-    } catch (e) {
-      print('Greška tokom čuvanja slike: $e');
+    // Provera dozvola
+    bool permissionsOk = await _checkPermissions();
+    if (!permissionsOk) {
+      print("Dozvole nisu odobrene, neće se sačuvati slika.");
+      return;
     }
+
+    // GPS lokacija
+    final loc.LocationData locationData = await location.getLocation();
+    final double latitude = locationData.latitude ?? 0.0;
+    final double longitude = locationData.longitude ?? 0.0;
+
+    print('GPS lokacija: $latitude, $longitude');
+
+    // Učitavanje slike
+    final img.Image? originalImage = img.decodeImage(imageBytes);
+    if (originalImage == null) {
+      print('Greška pri učitavanju slike.');
+      return;
+    }
+
+    // Kodiranje slike
+    final Uint8List encodedImage = Uint8List.fromList(img.encodeJpg(originalImage));
+
+    // Snimanje slike u galeriju
+    final AssetEntity? result = await PhotoManager.editor.saveImage(
+      encodedImage,
+      filename: 'moja_slika_${DateTime.now().millisecondsSinceEpoch}.jpg',
+    );
+
+    if (result != null) {
+      print('Slika sa GPS lokacijom sačuvana!');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Slika sa lokacijom je sačuvana!')),
+      );
+    } else {
+      print('Greška pri snimanju slike!');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Greška pri snimanju slike!')),
+      );
+    }
+  } catch (e) {
+    print('Greška tokom čuvanja slike: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Greška pri čuvanju slike!')),
+    );
   }
+}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ESP32 Camera Control'),
-        backgroundColor: Colors.deepPurple,),
+        title: const Text('ESP32 Camera Control',
+        style:TextStyle(color: Colors.white)),
+        
+        backgroundColor: Colors.deepPurple
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (_imageBytes != null) Image.memory(_imageBytes!), // Prikaz slike
-            if (_isLoading) const CircularProgressIndicator(), // Indikator učitavanja
+            // Okvir (pravougaonik) koji je uvek prisutan
+            Container(
+              width: 320, // Širina okvira
+              height: 242, // Visina okvira
+              decoration: BoxDecoration(
+                color: Colors.black, // Boja pozadine
+                border: Border.all(
+                  color: Colors.deepPurple, // Boja ivica
+                  width: 3.0, // Debljina ivica
+                ),
+                borderRadius: BorderRadius.circular(5.0), 
+              // Zaobljeni uglovi
+              ),
+              child: Center(
+                child: _isLoading
+                    ? const CircularProgressIndicator() // Prikaz indikatora učitavanja
+                    : (_imageBytes != null
+                        ? Image.memory(_imageBytes!) // Prikaz slike
+                        : const Text('No content available.',
+                        style: TextStyle(color: Colors.white))), // Tekst ako nema slike
+              ),  
+            ),
+            const SizedBox(height: 20), // Razmak ispod okvira
 
             // Dugme za hvatanje slike
             ElevatedButton(
@@ -221,17 +255,17 @@ class _CameraScreenState extends State<CameraScreen> {
               },
               child: const Text('Start Stream'),
             ),
-                    ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => MapScreen(),
-                ),
-              );
-            },
-            child: const Text('Open Map'),
-          ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => MapScreen(),
+                  ),
+                );
+              },
+              child: const Text('Open Map'),
+            ),
           ],
         ),
       ),
@@ -248,27 +282,24 @@ class StreamScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('ESP32 Stream'),
         backgroundColor: Colors.deepPurple,
-        ),
+      ),
       body: Center(
-         child: Column(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [ 
+          children: [
             Mjpeg(
-          stream: 'http://192.168.0.7:81/stream',
-          isLive: true,
+              stream: 'http://192.168.0.7:81/stream',
+              isLive: true,
             ),
-            
-        ElevatedButton(
-            onPressed: () {
+            ElevatedButton(
+              onPressed: () {
                 Navigator.pop(context);
               },
               child: const Text('Back'),
             ),
-        // Dugme za otvaranje mape u aplikaciji
-  
-      ]),
-    )
-    )
-    ;
+          ],
+        ),
+      ),
+    );
   }
 }
