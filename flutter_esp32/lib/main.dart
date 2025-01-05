@@ -33,7 +33,7 @@ class CameraControl {
     print('Pokušaj povezivanja na URL: $url');
 
     try {
-      final response = await http.get(url);
+      final response = await http.get(url).timeout(const Duration(seconds: 5)); // Timeout
       if (response.statusCode == 200) {
         print('Slika uspešno preuzeta!');
         return response.bodyBytes;
@@ -76,7 +76,7 @@ class _CameraScreenState extends State<CameraScreen> {
     });
 
     try {
-      final image = await cameraControl.getStill(); // Hvata frejm
+      final image = await Future(() => cameraControl.getStill());
       if (image != null) {
         setState(() {
           _imageBytes = image;
@@ -98,38 +98,37 @@ class _CameraScreenState extends State<CameraScreen> {
   // Čuvanje slike sa GPS lokacijom
   Future<void> _saveImageWithLocation(Uint8List imageBytes) async {
     try {
-      // Proveri dozvole
+      final permission = await loc.Location().requestPermission();
+      if (permission != loc.PermissionStatus.granted) {
+        throw Exception('Dozvole za GPS nisu odobrene.');
+      }
+
       final loc.LocationData locationData = await location.getLocation();
       final double latitude = locationData.latitude ?? 0.0;
       final double longitude = locationData.longitude ?? 0.0;
 
       print('GPS lokacija: $latitude, $longitude');
 
-      // Učitavanje slike
       final img.Image? originalImage = img.decodeImage(imageBytes);
       if (originalImage == null) {
-        print('Greška pri učitavanju slike.');
-        return;
+        throw Exception('Greška pri učitavanju slike.');
       }
 
-      // Snimanje slike
       final Uint8List encodedImage = Uint8List.fromList(img.encodeJpg(originalImage));
-
-      final AssetEntity? result = await PhotoManager.editor.saveImage(
-        encodedImage,
-        filename: 'slika_${DateTime.now().millisecondsSinceEpoch}.jpg',
-      );
+      final AssetEntity? result = await PhotoManager.editor.saveImage(encodedImage,filename: 'moja_slika_${DateTime.now().millisecondsSinceEpoch}.jpg',);
 
       if (result != null) {
-        print('Slika sa GPS lokacijom sačuvana!');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Slika sačuvana!')),
         );
       } else {
-        print('Greška pri snimanju slike!');
+        throw Exception('Greška pri snimanju slike!');
       }
     } catch (e) {
       print('Greška: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Greška pri snimanju slike.')),
+      );
     }
   }
 
@@ -137,7 +136,8 @@ class _CameraScreenState extends State<CameraScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ESP32 Camera Control'),
+        title: const Text('ESP32 Camera Control',
+        style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.deepPurple,
       ),
       body: Center(
@@ -160,12 +160,15 @@ class _CameraScreenState extends State<CameraScreen> {
                   ? Mjpeg(
                       stream: '${cameraControl.baseHost}:81/stream', // Strim
                       isLive: true,
+                      timeout: const Duration(seconds: 10), // Timeout
+                      error: (context, error, stackTrace) =>
+                          Text('Stream Error: $error'),
                     )
                   : _imageBytes != null
                       ? Image.memory(_imageBytes!) // Prikaz slike
                       : const Center(
                           child: Text(
-                            'No content available.',
+                            'No content available.\n  Click Start Stream!',
                             style: TextStyle(color: Colors.white),
                           ),
                         ),
@@ -184,10 +187,12 @@ class _CameraScreenState extends State<CameraScreen> {
             ),
 
             // Dugme za hvatanje frejma sa strima
-            ElevatedButton(
-              onPressed: _captureFromStream,
-              child: const Text('Take Photo'),
-            ),
+            _isLoading
+                ? const CircularProgressIndicator()
+                : ElevatedButton(
+                    onPressed: _captureFromStream,
+                    child: const Text('Take Photo'),
+                  ),
 
             // Dugme za čuvanje slike sa lokacijom
             if (_imageCaptured)
@@ -200,7 +205,7 @@ class _CameraScreenState extends State<CameraScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => MapScreen(),
+                    builder: (context) => const MapScreen(),
                   ),
                 );
               },
@@ -210,5 +215,11 @@ class _CameraScreenState extends State<CameraScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _isStreaming = false; // Zaustavi strim prilikom izlaska
+    super.dispose();
   }
 }
