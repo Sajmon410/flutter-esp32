@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
 
 // Kamera kontrola (ESP32)
 class CameraControl {
-  final String baseHost = 'http://192.168.0.7'; // Port 81
+  final String baseHost = 'http://192.168.0.21'; // Port 81
 
   // Funkcija za uzimanje slike
   Future<Uint8List?> getStill() async {
@@ -76,7 +76,7 @@ class _CameraScreenState extends State<CameraScreen> {
   // Provera mrežne konekcije
   void testConnection() async {
     try {
-      final result = await InternetAddress.lookup('192.168.0.7');
+      final result = await InternetAddress.lookup('http://192.168.0.21');
       if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
         print('Uređaj je dostupan.');
       }
@@ -288,9 +288,9 @@ class StreamScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Mjpeg(
-              stream: 'http://192.168.0.7:81/stream',
-              isLive: true,
-            ),
+            stream: 'http://192.168.0.21:81/stream',
+            isLive: true,
+          ),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
