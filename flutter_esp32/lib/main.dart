@@ -64,6 +64,8 @@ class _CameraScreenState extends State<CameraScreen> {
 
   loc.Location location = loc.Location(); // GPS lokacija
 
+  List<PhotoInfo> photos = []; // Lista za čuvanje podataka o slikama
+
   @override
   void initState() {
     super.initState();
@@ -115,9 +117,15 @@ class _CameraScreenState extends State<CameraScreen> {
       }
 
       final Uint8List encodedImage = Uint8List.fromList(img.encodeJpg(originalImage));
-      final AssetEntity? result = await PhotoManager.editor.saveImage(encodedImage,filename: 'moja_slika_${DateTime.now().millisecondsSinceEpoch}.jpg',);
+      final AssetEntity? result = await PhotoManager.editor.saveImage(encodedImage, filename: 'moja_slika_${DateTime.now().millisecondsSinceEpoch}.jpg');
 
       if (result != null) {
+        // Čuvanje podataka o slici u listu
+        photos.add(PhotoInfo(
+          latitude: latitude,
+          longitude: longitude,
+          imagePath: result.id,
+        ));
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Slika sačuvana!')),
         );
@@ -136,8 +144,7 @@ class _CameraScreenState extends State<CameraScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ESP32 Camera Control',
-        style: TextStyle(color: Colors.white)),
+        title: const Text('ESP32 Camera Control', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.deepPurple,
       ),
       body: Center(
@@ -200,12 +207,14 @@ class _CameraScreenState extends State<CameraScreen> {
                 onPressed: () => _saveImageWithLocation(_imageBytes!),
                 child: const Text('Save Image'),
               ),
-               ElevatedButton(
+
+            // Dugme za otvaranje mape
+            ElevatedButton(
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const MapScreen(),
+                    builder: (context) => MapScreen(photos: photos),
                   ),
                 );
               },
@@ -222,4 +231,13 @@ class _CameraScreenState extends State<CameraScreen> {
     _isStreaming = false; // Zaustavi strim prilikom izlaska
     super.dispose();
   }
+}
+
+// Model za čuvanje podataka o slici
+class PhotoInfo {
+  final double latitude;
+  final double longitude;
+  final String imagePath;
+
+  PhotoInfo({required this.latitude, required this.longitude, required this.imagePath});
 }

@@ -1,112 +1,111 @@
-import 'dart:async'; // Tajmeri
-import 'package:flutter/material.dart'; // Osnovni UI elementi
-import 'package:google_maps_flutter/google_maps_flutter.dart'; // Google mape
-import 'package:location/location.dart'; // GPS lokacija
-
-void main() => runApp(const MyApp());
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: MapScreen(),
-    );
-  }
-}
+import 'package:flutter/material.dart';
+import 'package:flutter_esp32/main.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:location/location.dart'; // Paket za rad sa GPS lokacijom
 
 class MapScreen extends StatefulWidget {
-  const MapScreen({super.key});
+  final List<PhotoInfo> photos;
+
+  const MapScreen({Key? key, required this.photos}) : super(key: key);
 
   @override
   State<MapScreen> createState() => _MapScreenState();
 }
 
 class _MapScreenState extends State<MapScreen> {
-  late GoogleMapController mapController; // Kontroler za mapu
-  final Location _location = Location(); // GPS lokacija
-  bool _isLocationSet = false; // Status postavljanja lokacije
+  late GoogleMapController mapController;
+  final LatLng _initialPosition = const LatLng(44.7866, 20.4489); // Beograd
+  Set<Marker> _markers = {};
 
-  // Početna koordinata - Beograd
-  final LatLng _initialPosition = const LatLng(44.7866, 20.4489);
+  // Za trenutnu lokaciju
+  final Location _location = Location(); // Za dobijanje GPS lokacije
+  bool _isLocationSet = false; // Da li je trenutna lokacija postavljena
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMarkers();
+    _getCurrentLocation(); // Dohvati trenutnu lokaciju
+  }
 
   // Funkcija za preuzimanje trenutne GPS lokacije
   Future<void> _getCurrentLocation() async {
     try {
-      // Dohvati trenutnu lokaciju
       final LocationData currentLocation = await _location.getLocation();
-
-      // Postavi kameru na trenutnu lokaciju
-      mapController.animateCamera(
-        CameraUpdate.newLatLngZoom(
-          LatLng(currentLocation.latitude!, currentLocation.longitude!),
-          14.0,
-        ),
-      );
-
-      // Obeleži da je lokacija postavljena
       setState(() {
         _isLocationSet = true;
       });
+
+      // Pomeranje kamere na trenutnu lokaciju
+      mapController.animateCamera(
+        CameraUpdate.newLatLngZoom(
+          LatLng(currentLocation.latitude!, currentLocation.longitude!),
+          14.0, // Zoom nivo
+        ),
+      );
     } catch (e) {
       print('Greška pri preuzimanju lokacije: $e');
     }
   }
 
-  // Funkcija koja se poziva kada se mapa kreira
-  void _onMapCreated(GoogleMapController controller) {
-    mapController = controller;
-
-    // Postavi kameru na početnu poziciju nakon kreiranja
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      mapController.animateCamera(
-        CameraUpdate.newLatLngZoom(
-          _initialPosition,
-          14.0,
+  void _loadMarkers() {
+    for (var photo in widget.photos) {
+      _markers.add(
+        Marker(
+          markerId: MarkerId(photo.imagePath),
+          position: LatLng(photo.latitude, photo.longitude),
+          infoWindow: InfoWindow(
+            title: 'Slika',
+            snippet: 'Kliknite za pregled',
+            onTap: () {
+              _showImageDialog(photo.imagePath);
+            },
+          ),
         ),
       );
-    });
+    }
+  }
 
-    // Pozovi funkciju za preuzimanje trenutne lokacije
-    _getCurrentLocation();
+  void _showImageDialog(String imagePath) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Image.asset(imagePath), // Prikazuje sliku
+          actions: [
+            TextButton(
+              child: const Text('Zatvori'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Google Map',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: const Text('Mapa sa slikama'),
         backgroundColor: Colors.deepPurple,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.of(context).pop(); // Dugme za povratak
-          },
-        ),
       ),
       body: GoogleMap(
-        key: const ValueKey('google_map'), // Ključ za prepoznavanje widgeta
-        onMapCreated: _onMapCreated,
         initialCameraPosition: CameraPosition(
-          target: _initialPosition, // Početna pozicija Beograd
-          zoom: 10.0, // Početno zumiranje
+          target: _initialPosition,
+          zoom: 10,
         ),
-        myLocationEnabled: true, // Prikaz trenutne lokacije korisnika
-        zoomControlsEnabled: true, // Kontrole za zumiranje
-        zoomGesturesEnabled: true, // Zumiranje prstima
-        mapType: MapType.normal, // Normalna mapa
-
-        // Uklonjena opcija za default dugme
-        myLocationButtonEnabled: false,
+        markers: _markers,
+        onMapCreated: (GoogleMapController controller) {
+          mapController = controller;
+        },
+        myLocationEnabled: true, // Omogućava prikaz trenutne lokacije korisnika
+        myLocationButtonEnabled: false, // Onemogućava default dugme za lokaciju
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Ručno osvežavanje GPS lokacije
+          // Poziva funkciju za preuzimanje trenutne lokacije
           _getCurrentLocation();
         },
         backgroundColor: Colors.deepPurple,
