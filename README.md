@@ -5,7 +5,7 @@ Save Photo : done <br />
 GPS location : done  <br />
 Google Map : done <br />
 Better UI : done <br />
-Pins : Showing only the locations where images have been captured since the app was opened. <br />
+Pins : Working  <br />
 Info Window for Google Maps in progress...
 --
 
