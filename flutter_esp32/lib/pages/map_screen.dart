@@ -15,7 +15,7 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   late GoogleMapController mapController;
-  final LatLng _initialPosition = const LatLng(44.7866, 20.4489); // Beograd
+final LatLng _initialPosition = const LatLng(45.2517, 19.8369);// Beograd
   Set<Marker> _markers = {};
 
   // Za trenutnu lokaciju
