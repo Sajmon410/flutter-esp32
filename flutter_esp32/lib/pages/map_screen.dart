@@ -88,7 +88,7 @@ class _MapScreenState extends State<MapScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mapa sa slikama',
+        title: const Text('Photo Location',
         style: TextStyle(color: Colors.white),),
         backgroundColor: Colors.deepPurple,
       ),
