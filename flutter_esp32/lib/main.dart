@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
 
 // Kamera kontrola
 class CameraControl {
-  final String baseHost = 'http://192.168.0.7'; // IP adresa ESP32
+  final String baseHost = 'http://192.168.0.11'; // IP adresa ESP32
 
   // Hvatanje slike
   Future<Uint8List?> getStill() async {
