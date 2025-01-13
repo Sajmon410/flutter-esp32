@@ -147,7 +147,11 @@ class _CameraScreenState extends State<CameraScreen> {
         title: const Text('ESP32 Camera Control', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.deepPurple,
       ),
-      body: Center(
+      backgroundColor: Colors.black,
+      body: Container(
+        color:  Colors.black,
+      
+      child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -223,7 +227,7 @@ class _CameraScreenState extends State<CameraScreen> {
           ],
         ),
       ),
-    );
+    ));
   }
 
   @override
