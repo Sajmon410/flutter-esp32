@@ -54,7 +54,7 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                     ],
                   ),
-                  child: Column(
+                  child: Stack(
                     children: [
                       ClipRRect(
                         borderRadius: const BorderRadius.vertical(
@@ -67,15 +67,14 @@ class _MapScreenState extends State<MapScreen> {
                           fit: BoxFit.cover,
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          'Lokacija slike',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
+                      Positioned(
+                        bottom: 10, // X ikona na dnu
+                        left: 50,   // Centriranje
+                        child: IconButton(
+                          icon: Icon(Icons.close, color: Colors.black),
+                          onPressed: () {
+                            _customInfoWindowController.hideInfoWindow!();
+                          },
                         ),
                       ),
                     ],
