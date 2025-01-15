@@ -1,9 +1,9 @@
-import 'dart:io'; // Rad sa fajlovima
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_esp32/main.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 import 'package:custom_info_window/custom_info_window.dart';
-import 'package:photo_manager/photo_manager.dart'; // Rad sa galerijom
+import 'package:photo_manager/photo_manager.dart';
+import 'package:flutter_esp32/main.dart';
 
 class MapScreen extends StatefulWidget {
   final List<PhotoInfo> photos;
@@ -18,8 +18,6 @@ class _MapScreenState extends State<MapScreen> {
   late gmaps.GoogleMapController mapController;
   final gmaps.LatLng _initialPosition = const gmaps.LatLng(45.2517, 19.8369);
   Set<gmaps.Marker> _markers = {};
-
-  // CustomInfoWindowController za prikaz prilagođenih info prozora
   final CustomInfoWindowController _customInfoWindowController =
       CustomInfoWindowController();
 
@@ -29,7 +27,6 @@ class _MapScreenState extends State<MapScreen> {
     _loadMarkers();
   }
 
-  // Učitavanje markera
   void _loadMarkers() {
     for (var photo in widget.photos) {
       _markers.add(
@@ -41,40 +38,63 @@ class _MapScreenState extends State<MapScreen> {
             if (imageFile != null) {
               _customInfoWindowController.addInfoWindow!(
                 Container(
-                  width: 150,
-                  height: 150,
+                  width: 200,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.2),
-                        blurRadius: 4,
+                        blurRadius: 6,
                         spreadRadius: 2,
                       ),
                     ],
                   ),
-                  child: Stack(
+                  child: Column(
                     children: [
                       ClipRRect(
                         borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(8),
+                          top: Radius.circular(12),
                         ),
                         child: Image.file(
                           imageFile,
-                          width: 150,
+                          width: 200,
                           height: 100,
                           fit: BoxFit.cover,
                         ),
                       ),
-                      Positioned(
-                        bottom: 10, // X ikona na dnu
-                        left: 50,   // Centriranje
-                        child: IconButton(
-                          icon: Icon(Icons.close, color: Colors.black),
-                          onPressed: () {
-                            _customInfoWindowController.hideInfoWindow!();
-                          },
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          children: [
+                            Text(
+                              'Photo Location',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            ElevatedButton(
+                              onPressed: () {
+                                _customInfoWindowController.hideInfoWindow!();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Info window closed'),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.deepPurple,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: const Text('Close',
+                              style: TextStyle(color: Colors.white)),
+                             
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -89,18 +109,9 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  // Preuzimanje fajla sa slike koristeći njen ID iz galerije
   Future<File?> _getImageFile(String imagePath) async {
-    try {
-      final assetEntity = await AssetEntity.fromId(imagePath);
-      if (assetEntity != null) {
-        final file = await assetEntity.file;
-        return file;
-      }
-    } catch (e) {
-      print('Greška pri učitavanju slike: $e');
-    }
-    return null;
+    final assetEntity = await AssetEntity.fromId(imagePath);
+    return assetEntity?.file;
   }
 
   @override
@@ -119,23 +130,17 @@ class _MapScreenState extends State<MapScreen> {
       body: Stack(
         children: [
           gmaps.GoogleMap(
-            initialCameraPosition: gmaps.CameraPosition(
-              target: _initialPosition,
-              zoom: 10,
-            ),
+            initialCameraPosition: gmaps.CameraPosition(target: _initialPosition, zoom: 10),
             markers: _markers,
-            onMapCreated: (gmaps.GoogleMapController controller) {
+            onMapCreated: (controller) {
               mapController = controller;
               _customInfoWindowController.googleMapController = controller;
             },
-            myLocationEnabled: true,
-            myLocationButtonEnabled: false,
-            zoomControlsEnabled: false,
           ),
           CustomInfoWindow(
             controller: _customInfoWindowController,
-            height: 150,
-            width: 150,
+            height: 200,
+            width: 200,
             offset: 50,
           ),
         ],

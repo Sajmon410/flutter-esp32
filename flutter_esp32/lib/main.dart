@@ -1,13 +1,16 @@
-import 'dart:typed_data'; // Rad sa bajtovima
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_esp32/pages/map_screen.dart';
 import 'package:http/http.dart' as http;
-import 'package:photo_manager/photo_manager.dart'; // Galerija
-import 'package:location/location.dart' as loc; // GPS lokacija
-import 'package:image/image.dart' as img; // Rad sa slikama
-import 'package:flutter_mjpeg/flutter_mjpeg.dart'; // MJPEG paket
+import 'package:photo_manager/photo_manager.dart';
+import 'package:location/location.dart' as loc;
+import 'package:image/image.dart' as img;
+import 'package:flutter_mjpeg/flutter_mjpeg.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart' as p;
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -25,27 +28,75 @@ class MyApp extends StatelessWidget {
 
 // Kamera kontrola
 class CameraControl {
-  final String baseHost = 'http://192.168.0.11'; // IP adresa ESP32
+  final String baseHost = 'http://192.168.0.11';
 
-  // Hvatanje slike
   Future<Uint8List?> getStill() async {
     final url = Uri.parse('$baseHost/capture?_cb=${DateTime.now().millisecondsSinceEpoch}');
-    print('Pokušaj povezivanja na URL: $url');
-
     try {
-      final response = await http.get(url).timeout(const Duration(seconds: 5)); // Timeout
+      final response = await http.get(url).timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
-        print('Slika uspešno preuzeta!');
         return response.bodyBytes;
       } else {
         print('HTTP Greška: ${response.statusCode}');
         return null;
       }
     } catch (e) {
-      print('Greška: $e'); // Detaljna greška
+      print('Greška: $e');
       return null;
     }
   }
+}
+
+// Model za čuvanje podataka o slici
+class PhotoInfo {
+  final double latitude;
+  final double longitude;
+  final String imagePath;
+
+  PhotoInfo({required this.latitude, required this.longitude, required this.imagePath});
+
+  Map<String, dynamic> toMap() {
+    return {
+      'latitude': latitude,
+      'longitude': longitude,
+      'imagePath': imagePath,
+    };
+  }
+
+  static PhotoInfo fromMap(Map<String, dynamic> map) {
+    return PhotoInfo(
+      latitude: map['latitude'],
+      longitude: map['longitude'],
+      imagePath: map['imagePath'],
+    );
+  }
+}
+
+// Funkcije za rad sa bazom
+Future<Database> initializeDatabase() async {
+  final dbPath = await getDatabasesPath();
+  return openDatabase(
+    p.join(dbPath, 'photos.db'),
+    onCreate: (db, version) {
+      return db.execute(
+        'CREATE TABLE photos(id INTEGER PRIMARY KEY, latitude REAL, longitude REAL, imagePath TEXT)',
+      );
+    },
+    version: 1,
+  );
+}
+
+Future<void> savePhotoToDatabase(PhotoInfo photo) async {
+  final db = await initializeDatabase();
+  await db.insert('photos', photo.toMap());
+}
+
+Future<List<PhotoInfo>> loadPhotosFromDatabase() async {
+  final db = await initializeDatabase();
+  final maps = await db.query('photos');
+  return List.generate(maps.length, (i) {
+    return PhotoInfo.fromMap(maps[i]);
+  });
 }
 
 class CameraScreen extends StatefulWidget {
@@ -56,34 +107,38 @@ class CameraScreen extends StatefulWidget {
 class _CameraScreenState extends State<CameraScreen> {
   final CameraControl cameraControl = CameraControl();
 
-  // Stanja
-  bool _isLoading = false; // Indikator učitavanja
-  bool _isStreaming = false; // Da li je stream aktivan
-  Uint8List? _imageBytes; // Hvatanje slike
+  bool _isLoading = false;
+  bool _isStreaming = false;
+  Uint8List? _imageBytes;
   bool _imageCaptured = false;
 
-  loc.Location location = loc.Location(); // GPS lokacija
-
-  List<PhotoInfo> photos = []; // Lista za čuvanje podataka o slikama
+  loc.Location location = loc.Location();
+  List<PhotoInfo> photos = [];
 
   @override
   void initState() {
     super.initState();
+    _initializePhotos();
   }
 
-  // Hvatanje slike sa strima
+  Future<void> _initializePhotos() async {
+    final loadedPhotos = await loadPhotosFromDatabase();
+    setState(() {
+      photos = loadedPhotos;
+    });
+  }
+
   Future<void> _captureFromStream() async {
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final image = await Future(() => cameraControl.getStill());
+      final image = await cameraControl.getStill();
       if (image != null) {
         setState(() {
           _imageBytes = image;
           _imageCaptured = true;
-          _isLoading = false;
         });
       } else {
         print('Greška pri preuzimanju slike.');
@@ -97,7 +152,6 @@ class _CameraScreenState extends State<CameraScreen> {
     }
   }
 
-  // Čuvanje slike sa GPS lokacijom
   Future<void> _saveImageWithLocation(Uint8List imageBytes) async {
     try {
       final permission = await loc.Location().requestPermission();
@@ -109,38 +163,46 @@ class _CameraScreenState extends State<CameraScreen> {
       final double latitude = locationData.latitude ?? 0.0;
       final double longitude = locationData.longitude ?? 0.0;
 
-      print('GPS lokacija: $latitude, $longitude');
-
       final img.Image? originalImage = img.decodeImage(imageBytes);
       if (originalImage == null) {
         throw Exception('Greška pri učitavanju slike.');
       }
 
       final Uint8List encodedImage = Uint8List.fromList(img.encodeJpg(originalImage));
-      final AssetEntity? result = await PhotoManager.editor.saveImage(encodedImage, filename: 'moja_slika_${DateTime.now().millisecondsSinceEpoch}.jpg');
+      final AssetEntity? result = await PhotoManager.editor.saveImage(
+        encodedImage,
+        filename: 'moja_slika_${DateTime.now().millisecondsSinceEpoch}.jpg',
+      );
 
       if (result != null) {
-        // Čuvanje podataka o slici u listu
-        photos.add(PhotoInfo(
+        final newPhoto = PhotoInfo(
           latitude: latitude,
           longitude: longitude,
           imagePath: result.id,
-        ));
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Slika sačuvana!')),
         );
+        await savePhotoToDatabase(newPhoto);
+        setState(() {
+          photos.add(newPhoto);
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Slika sačuvana!')),
+          );
+        }
       } else {
         throw Exception('Greška pri snimanju slike!');
       }
     } catch (e) {
       print('Greška: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Greška pri snimanju slike.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Greška pri snimanju slike.')),
+        );
+      }
     }
   }
 
-  @override
+   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -229,19 +291,4 @@ class _CameraScreenState extends State<CameraScreen> {
       ),
     ));
   }
-
-  @override
-  void dispose() {
-    _isStreaming = false; // Zaustavi strim prilikom izlaska
-    super.dispose();
-  }
-}
-
-// Model za čuvanje podataka o slici
-class PhotoInfo {
-  final double latitude;
-  final double longitude;
-  final String imagePath;
-
-  PhotoInfo({required this.latitude, required this.longitude, required this.imagePath});
 }
