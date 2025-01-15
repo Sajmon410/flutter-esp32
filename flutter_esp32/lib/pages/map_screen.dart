@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_esp32/main.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 import 'package:custom_info_window/custom_info_window.dart';
 import 'package:photo_manager/photo_manager.dart';
-import 'package:flutter_esp32/main.dart';
 
 class MapScreen extends StatefulWidget {
   final List<PhotoInfo> photos;
@@ -15,17 +15,35 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
+  gmaps.BitmapDescriptor markerIcon = gmaps.BitmapDescriptor.defaultMarker;
+
+@override
+  void initState() {
+    super.initState();
+    addCustomIcon();  // Pozivamo funkciju za dodavanje custom ikone
+    _loadMarkers();
+  }
+void addCustomIcon() {
+  gmaps.BitmapDescriptor.fromAssetImage(
+    ImageConfiguration(devicePixelRatio: 2.5),
+    "assets/gps.png",
+  ).then((icon) {
+    setState(() {
+      markerIcon = icon;
+    });
+    print("Custom marker icon loaded successfully");
+  }).catchError((e) {
+    print("Error loading marker icon: $e");
+  });
+}
+
   late gmaps.GoogleMapController mapController;
   final gmaps.LatLng _initialPosition = const gmaps.LatLng(45.2517, 19.8369);
   Set<gmaps.Marker> _markers = {};
   final CustomInfoWindowController _customInfoWindowController =
       CustomInfoWindowController();
 
-  @override
-  void initState() {
-    super.initState();
-    _loadMarkers();
-  }
+  
 
   void _loadMarkers() {
     for (var photo in widget.photos) {
@@ -67,11 +85,13 @@ class _MapScreenState extends State<MapScreen> {
                         padding: const EdgeInsets.all(8.0),
                         child: Column(
                           children: [
-                            Text(
-                              'Photo Location',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
+                            Center(
+                              child: Text(
+                                photo.imagePath,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -92,7 +112,6 @@ class _MapScreenState extends State<MapScreen> {
                               ),
                               child: const Text('Close',
                               style: TextStyle(color: Colors.white)),
-                             
                             ),
                           ],
                         ),
@@ -104,6 +123,7 @@ class _MapScreenState extends State<MapScreen> {
               );
             }
           },
+          icon: markerIcon,  // Koristimo custom ikonu ovde
         ),
       );
     }
