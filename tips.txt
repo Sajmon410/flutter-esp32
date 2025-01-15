@@ -1,2 +1,1 @@
-Moze biti otvoren samo 1 stream u istom trenutku
-
+-Only one device can access Camera Livestream at the moment. (192.168.0.##:81/stream)
