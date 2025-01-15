@@ -7,6 +7,7 @@ Google Map : done <br />
 Better UI : done <br />
 Pins : done  <br />
 Info Window GoogleMaps: done <br />
+Local DataBase for Photos: done <br />
 Working only on iOS (Android in progress)
 --
 
