@@ -25,11 +25,12 @@ class _MapScreenState extends State<MapScreen> {
   }
 void addCustomIcon() {
   gmaps.BitmapDescriptor.fromAssetImage(
-    ImageConfiguration(devicePixelRatio: 2.5),
+   const ImageConfiguration(devicePixelRatio: 1.0),
     "assets/gps.png",
   ).then((icon) {
     setState(() {
       markerIcon = icon;
+      _loadMarkers();  
     });
     print("Custom marker icon loaded successfully");
   }).catchError((e) {
