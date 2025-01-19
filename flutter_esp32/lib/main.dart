@@ -37,11 +37,11 @@ class CameraControl {
       if (response.statusCode == 200) {
         return response.bodyBytes;
       } else {
-        print('HTTP Greška: ${response.statusCode}');
+        print('HTTP Error: ${response.statusCode}');
         return null;
       }
     } catch (e) {
-      print('Greška: $e');
+      print('Error: $e');
       return null;
     }
   }
@@ -141,10 +141,10 @@ class _CameraScreenState extends State<CameraScreen> {
           _imageCaptured = true;
         });
       } else {
-        print('Greška pri preuzimanju slike.');
+        print('Error with image.');
       }
     } catch (e) {
-      print("Greška: $e");
+      print("Error: $e");
     } finally {
       setState(() {
         _isLoading = false;
@@ -156,7 +156,7 @@ class _CameraScreenState extends State<CameraScreen> {
     try {
       final permission = await loc.Location().requestPermission();
       if (permission != loc.PermissionStatus.granted) {
-        throw Exception('Dozvole za GPS nisu odobrene.');
+        throw Exception('GPS permissions are not allowed.');
       }
 
       final loc.LocationData locationData = await location.getLocation();
@@ -165,7 +165,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
       final img.Image? originalImage = img.decodeImage(imageBytes);
       if (originalImage == null) {
-        throw Exception('Greška pri učitavanju slike.');
+        throw Exception('Error while image loading.');
       }
 
       final Uint8List encodedImage = Uint8List.fromList(img.encodeJpg(originalImage));
@@ -186,17 +186,17 @@ class _CameraScreenState extends State<CameraScreen> {
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Slika sačuvana!')),
+            const SnackBar(content: Text('Photo saved to gallery!')),
           );
         }
       } else {
-        throw Exception('Greška pri snimanju slike!');
+        throw Exception('Error while downloading image!');
       }
     } catch (e) {
       print('Greška: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Greška pri snimanju slike.')),
+          const SnackBar(content: Text('Error while taking photo')),
         );
       }
     }
