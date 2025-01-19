@@ -196,7 +196,7 @@ class _CameraScreenState extends State<CameraScreen> {
       print('Greška: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error while taking photo')),
+          const SnackBar(content: Text('Error while taking')),
         );
       }
     }

@@ -83,7 +83,7 @@ void addCustomIcon() {
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.all(8.0),
+                        padding: EdgeInsets.only(left: 8),
                         child: Column(
                           children: [
                             Center(
@@ -96,23 +96,49 @@ void addCustomIcon() {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            ElevatedButton(
-                              onPressed: () {
-                                _customInfoWindowController.hideInfoWindow!();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Info window closed'),
+                            Row(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 8.0),
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      _customInfoWindowController.hideInfoWindow!();
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Info window closed'),
+                                        ),
+                                      );
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.redAccent,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    child: const Text('Delete',
+                                    style: TextStyle(color: Colors.white)),
                                   ),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.deepPurple,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                              ),
-                              child: const Text('Close',
-                              style: TextStyle(color: Colors.white)),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    _customInfoWindowController.hideInfoWindow!();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Info window closed'),
+                                      ),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.deepPurple,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  child: const Text('Close',
+                                  style: TextStyle(color: Colors.white)),
+                                ),
+                                 
+                              ],
                             ),
                           ],
                         ),
