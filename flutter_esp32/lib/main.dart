@@ -11,6 +11,7 @@ import 'package:path/path.dart' as p;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  //ovde se dodaje funkcija za brisanje baze pri potrebi
   runApp(const MyApp());
 }
 

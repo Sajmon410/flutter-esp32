@@ -209,6 +209,7 @@ class _MapScreenState extends State<MapScreen> {
           gmaps.GoogleMap(
             initialCameraPosition: gmaps.CameraPosition(target: _initialPosition, zoom: 10),
             markers: _markers,
+            myLocationButtonEnabled: false,
             onMapCreated: (controller) {
               mapController = controller;
               _customInfoWindowController.googleMapController = controller;
