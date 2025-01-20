@@ -52,14 +52,16 @@ class PhotoInfo {
   final double latitude;
   final double longitude;
   final String imagePath;
+  final DateTime timestamp;
 
-  PhotoInfo({required this.latitude, required this.longitude, required this.imagePath});
+  PhotoInfo({required this.latitude, required this.longitude, required this.imagePath, required this.timestamp,});
 
   Map<String, dynamic> toMap() {
     return {
       'latitude': latitude,
       'longitude': longitude,
       'imagePath': imagePath,
+      'timestamp': timestamp.toIso8601String(),
     };
   }
 
@@ -68,6 +70,7 @@ class PhotoInfo {
       latitude: map['latitude'],
       longitude: map['longitude'],
       imagePath: map['imagePath'],
+      timestamp: DateTime.parse(map['timestamp']),
     );
   }
 }
@@ -79,7 +82,7 @@ Future<Database> initializeDatabase() async {
     p.join(dbPath, 'photos.db'),
     onCreate: (db, version) {
       return db.execute(
-        'CREATE TABLE photos(id INTEGER PRIMARY KEY, latitude REAL, longitude REAL, imagePath TEXT)',
+        'CREATE TABLE photos(id INTEGER PRIMARY KEY, latitude REAL, longitude REAL, imagePath TEXT, timestamp TEXT)',
       );
     },
     version: 1,
@@ -107,6 +110,20 @@ Future<List<PhotoInfo>> loadPhotosFromDatabase() async {
     return PhotoInfo.fromMap(maps[i]);
   });
 }
+
+//funkcija za brisanje cele baze
+// Future<void> deleteDatabaseFile()async{
+//   final dbPath = await getDatabasesPath();
+//   final path = p.join(dbPath, 'photos.db');
+
+//   final databaseExists = await databaseFactory.databaseExists(path);
+//   if (databaseExists){
+//     await deleteDatabase(path);
+//     print("Data Base Deletet Succesfully: $path");
+//   }else{
+//     print("Data Base doesn't exists: $path");
+//   }
+// }
 
 class CameraScreen extends StatefulWidget {
   @override
@@ -188,6 +205,7 @@ class _CameraScreenState extends State<CameraScreen> {
           latitude: latitude,
           longitude: longitude,
           imagePath: result.id,
+          timestamp: DateTime.now(),
         );
         await savePhotoToDatabase(newPhoto);
         setState(() {

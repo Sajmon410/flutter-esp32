@@ -88,11 +88,14 @@ class _MapScreenState extends State<MapScreen> {
                         child: Column(
                           children: [
                             Center(
-                              child: Text(
-                                photo.imagePath,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 10,
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 5.0),
+                                child: Text(
+                                  '${photo.timestamp.day}/${photo.timestamp.month}/${photo.timestamp.year}\n'
+                                  '${photo.timestamp.hour}:${photo.timestamp.minute}:${photo.timestamp.second}',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                  ),
                                 ),
                               ),
                             ),
