@@ -86,6 +86,15 @@ Future<Database> initializeDatabase() async {
   );
 }
 
+Future<void> deletePhotoFromDatabase(String imagePath) async{
+  final db = await initializeDatabase();
+  await db.delete(
+    'photos',
+    where: 'imagePath = ?',
+    whereArgs : [imagePath],
+    );
+}
+
 Future<void> savePhotoToDatabase(PhotoInfo photo) async {
   final db = await initializeDatabase();
   await db.insert('photos', photo.toMap());

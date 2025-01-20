@@ -17,26 +17,26 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   gmaps.BitmapDescriptor markerIcon = gmaps.BitmapDescriptor.defaultMarker;
 
-@override
+  @override
   void initState() {
     super.initState();
-    addCustomIcon();  // Pozivamo funkciju za dodavanje custom ikone
+    addCustomIcon();
     _loadMarkers();
   }
-void addCustomIcon() {
-  gmaps.BitmapDescriptor.fromAssetImage(
-   const ImageConfiguration(devicePixelRatio: 1.0),
-    "assets/gps.png",
-  ).then((icon) {
-    setState(() {
-      markerIcon = icon;
-      _loadMarkers();  
+
+  void addCustomIcon() {
+    gmaps.BitmapDescriptor.fromAssetImage(
+      const ImageConfiguration(devicePixelRatio: 1.0),
+      "assets/gps.png",
+    ).then((icon) {
+      setState(() {
+        markerIcon = icon;
+        _loadMarkers();
+      });
+    }).catchError((e) {
+      print("Error loading marker icon: $e");
     });
-    print("Custom marker icon loaded successfully");
-  }).catchError((e) {
-    print("Error loading marker icon: $e");
-  });
-}
+  }
 
   late gmaps.GoogleMapController mapController;
   final gmaps.LatLng _initialPosition = const gmaps.LatLng(45.2517, 19.8369);
@@ -44,9 +44,10 @@ void addCustomIcon() {
   final CustomInfoWindowController _customInfoWindowController =
       CustomInfoWindowController();
 
-  
-
   void _loadMarkers() {
+    setState(() {
+      
+   
     for (var photo in widget.photos) {
       _markers.add(
         gmaps.Marker(
@@ -102,12 +103,7 @@ void addCustomIcon() {
                                   padding: const EdgeInsets.only(right: 8.0),
                                   child: ElevatedButton(
                                     onPressed: () {
-                                      _customInfoWindowController.hideInfoWindow!();
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Info window closed'),
-                                        ),
-                                      );
+                                      _showDeleteConfirmation(photo);
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.redAccent,
@@ -116,17 +112,12 @@ void addCustomIcon() {
                                       ),
                                     ),
                                     child: const Text('Delete',
-                                    style: TextStyle(color: Colors.white)),
+                                        style: TextStyle(color: Colors.white)),
                                   ),
                                 ),
                                 ElevatedButton(
                                   onPressed: () {
                                     _customInfoWindowController.hideInfoWindow!();
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Info window closed'),
-                                      ),
-                                    );
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.deepPurple,
@@ -135,9 +126,8 @@ void addCustomIcon() {
                                     ),
                                   ),
                                   child: const Text('Close',
-                                  style: TextStyle(color: Colors.white)),
+                                      style: TextStyle(color: Colors.white)),
                                 ),
-                                 
                               ],
                             ),
                           ],
@@ -150,15 +140,52 @@ void addCustomIcon() {
               );
             }
           },
-          icon: markerIcon,  // Koristimo custom ikonu ovde
+          icon: markerIcon,
         ),
       );
     }
+     });
   }
+  
 
   Future<File?> _getImageFile(String imagePath) async {
     final assetEntity = await AssetEntity.fromId(imagePath);
     return assetEntity?.file;
+  }
+
+  void _showDeleteConfirmation(PhotoInfo photo) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Deletion'),
+        content: const Text('Are you sure you want to delete this photo?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _deletePhoto(photo);
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _deletePhoto(PhotoInfo photo) {
+    setState(() {
+      _markers.removeWhere((marker) => marker.markerId.value == photo.imagePath);
+      widget.photos.remove(photo);
+    });
+    deletePhotoFromDatabase(photo.imagePath);
+    _customInfoWindowController.hideInfoWindow!();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Photo deleted successfully.')),
+    );
   }
 
   @override
