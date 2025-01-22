@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Exclude the iOS AppDelegate file containing sensitive information
+ios/Runner/AppDelegate.swift
