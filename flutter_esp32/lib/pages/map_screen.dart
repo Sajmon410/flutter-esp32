@@ -78,8 +78,8 @@ class _MapScreenState extends State<MapScreen> {
                         ),
                         child: Image.file(
                           imageFile,
-                          width: 200,
-                          height: 100,
+                          width: 320,
+                          height: 240,
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -99,39 +99,46 @@ class _MapScreenState extends State<MapScreen> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 8.0),
-                                  child: ElevatedButton(
+                           const SizedBox(height: 4),
+                            Center(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center, // Center the buttons horizontally
+                                children: [
+                                  Center(
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(right: 50.0),
+                                      child: Center(
+                                        child: ElevatedButton(
+                                          onPressed: () {
+                                            _showDeleteConfirmation(photo);
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.redAccent,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                          ),
+                                          child: const Text('Delete',
+                                              style: TextStyle(color: Colors.white)),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  ElevatedButton(
                                     onPressed: () {
-                                      _showDeleteConfirmation(photo);
+                                      _customInfoWindowController.hideInfoWindow!();
                                     },
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.redAccent,
+                                      backgroundColor: Colors.deepPurple,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                     ),
-                                    child: const Text('Delete',
+                                    child: const Text('Close',
                                         style: TextStyle(color: Colors.white)),
                                   ),
-                                ),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    _customInfoWindowController.hideInfoWindow!();
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.deepPurple,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                  child: const Text('Close',
-                                      style: TextStyle(color: Colors.white)),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -217,8 +224,8 @@ class _MapScreenState extends State<MapScreen> {
           ),
           CustomInfoWindow(
             controller: _customInfoWindowController,
-            height: 200,
-            width: 200,
+            height: 350,
+            width: 300,
             offset: 50,
           ),
         ],
