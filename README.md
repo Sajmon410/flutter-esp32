@@ -6,7 +6,7 @@ GPS location : done  <br />
 Google Map : done <br />
 Better UI : done <br />
 Pins : done  <br />
-Info Window GoogleMaps: done <br />
+Info Window GoogleMaps: done (minimizing in future) <br /> 
 Local DataBase for Photos: done <br />
 Broadcast ESP32: done <br />
 Working only on iOS (Android in progress)
