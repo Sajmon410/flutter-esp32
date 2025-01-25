@@ -78,18 +78,18 @@ class _MapScreenState extends State<MapScreen> {
                         ),
                         child: Image.file(
                           imageFile,
-                          width: 320,
-                          height: 240,
+                          width: 200,
+                          height: 150,
                           fit: BoxFit.cover,
                         ),
                       ),
                       Padding(
-                        padding: EdgeInsets.only(left: 8),
+                        padding: EdgeInsets.only(left: 0),
                         child: Column(
                           children: [
                             Center(
                               child: Padding(
-                                padding: const EdgeInsets.only(top: 5.0),
+                                padding: const EdgeInsets.only(top: 6.0),
                                 child: Text(
                                   '${photo.timestamp.day}/${photo.timestamp.month}/${photo.timestamp.year}\n'
                                   '${photo.timestamp.hour}:${photo.timestamp.minute}:${photo.timestamp.second}',
@@ -104,10 +104,8 @@ class _MapScreenState extends State<MapScreen> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center, // Center the buttons horizontally
                                 children: [
-                                  Center(
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(right: 50.0),
-                                      child: Center(
+                                    Padding(
+                                      padding: const EdgeInsets.only(right: 5.0),
                                         child: ElevatedButton(
                                           onPressed: () {
                                             _showDeleteConfirmation(photo);
@@ -121,9 +119,7 @@ class _MapScreenState extends State<MapScreen> {
                                           child: const Text('Delete',
                                               style: TextStyle(color: Colors.white)),
                                         ),
-                                      ),
-                                    ),
-                                  ),
+                                      ),                                
                                   ElevatedButton(
                                     onPressed: () {
                                       _customInfoWindowController.hideInfoWindow!();
@@ -224,8 +220,8 @@ class _MapScreenState extends State<MapScreen> {
           ),
           CustomInfoWindow(
             controller: _customInfoWindowController,
-            height: 350,
-            width: 300,
+            height: 250,
+            width: 200,
             offset: 50,
           ),
         ],
