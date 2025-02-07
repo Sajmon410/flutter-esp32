@@ -8,7 +8,7 @@ import 'package:photo_manager/photo_manager.dart';
 class MapScreen extends StatefulWidget {
   final List<PhotoInfo> photos;
 
-  const MapScreen({Key? key, required this.photos}) : super(key: key);
+  const MapScreen({super.key, required this.photos});
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -40,7 +40,7 @@ class _MapScreenState extends State<MapScreen> {
 
   late gmaps.GoogleMapController mapController;
   final gmaps.LatLng _initialPosition = const gmaps.LatLng(45.2517, 19.8369);
-  Set<gmaps.Marker> _markers = {};
+  final Set<gmaps.Marker> _markers = {};
   final CustomInfoWindowController _customInfoWindowController =
       CustomInfoWindowController();
 

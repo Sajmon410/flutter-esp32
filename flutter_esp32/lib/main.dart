@@ -16,7 +16,7 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -127,6 +127,8 @@ Future<List<PhotoInfo>> loadPhotosFromDatabase() async {
 // }
 
 class CameraScreen extends StatefulWidget {
+  const CameraScreen({super.key});
+
   @override
   _CameraScreenState createState() => _CameraScreenState();
 }
@@ -196,31 +198,27 @@ class _CameraScreenState extends State<CameraScreen> {
       }
 
       final Uint8List encodedImage = Uint8List.fromList(img.encodeJpg(originalImage));
-      final AssetEntity? result = await PhotoManager.editor.saveImage(
+      final AssetEntity result = await PhotoManager.editor.saveImage(
         encodedImage,
         filename: 'moja_slika_${DateTime.now().millisecondsSinceEpoch}.jpg',
       );
 
-      if (result != null) {
-        final newPhoto = PhotoInfo(
-          latitude: latitude,
-          longitude: longitude,
-          imagePath: result.id,
-          timestamp: DateTime.now(),
+      final newPhoto = PhotoInfo(
+        latitude: latitude,
+        longitude: longitude,
+        imagePath: result.id,
+        timestamp: DateTime.now(),
+      );
+      await savePhotoToDatabase(newPhoto);
+      setState(() {
+        photos.add(newPhoto);
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Photo saved to gallery!')),
         );
-        await savePhotoToDatabase(newPhoto);
-        setState(() {
-          photos.add(newPhoto);
-        });
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Photo saved to gallery!')),
-          );
-        }
-      } else {
-        throw Exception('Error while downloading image!');
       }
-    } catch (e) {
+        } catch (e) {
       print('Greška: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

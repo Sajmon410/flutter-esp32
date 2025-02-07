@@ -34,20 +34,20 @@ dependencies:
   http: ^0.13.1
   image: ^4.0.17
   path_provider: ^2.1.1
-  geolocator: ^9.0.2
-  image_gallery_saver: ^1.7.1
-  permission_handler: ^10.2.0
-  flutter_map: ^1.0.0
-  flutter_launcher_icons: ^0.13.1
+  geolocator: ^13.0.2
+  image_gallery_saver_plus: ^3.0.5
+  permission_handler: ^11.3.1
+  flutter_map: ^4.0.0
+  flutter_launcher_icons: ^0.14.3
   provider: ^6.1.0
-  flutter_local_notifications: ^16.3.1
-  camera: ^0.10.5+5
+  flutter_local_notifications: ^18.0.1
+  camera: ^0.10.5
   video_player: ^2.8.2
   photo_manager: ^3.0.0
   flutter_vlc_player: ^7.4.2
-  location: ^5.0.3
-  geocoding: ^2.1.0
-  exif: ^2.0.0
+  location: ^8.0.0
+  geocoding: ^3.0.0
+  exif: ^3.3.0
   rational: ^2.2.3
   flutter_mjpeg: ^2.0.4
   google_maps_flutter: ^2.10.0
@@ -56,7 +56,7 @@ dependencies:
   sqflite: ^2.4.1
   path: ^1.9.0
   multicast_dns: ^0.3.2+7
-  
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

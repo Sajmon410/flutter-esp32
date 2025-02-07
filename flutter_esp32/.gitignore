@@ -43,6 +43,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+**/AndroidManifest.xml
 
 # Exclude the iOS AppDelegate file containing sensitive information
 ios/Runner/AppDelegate.swift
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build
