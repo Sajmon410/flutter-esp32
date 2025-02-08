@@ -9,6 +9,6 @@ Pins : done  <br />
 Info Window GoogleMaps: done <br /> 
 Local DataBase for Photos: done <br />
 Broadcast ESP32: done <br />
-Working only on iOS (Android still doesn't work)
+Working on iOS and Android
 --
 
