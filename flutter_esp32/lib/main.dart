@@ -29,7 +29,7 @@ class MyApp extends StatelessWidget {
 
 // Kamera kontrola
 class CameraControl {
-  final String baseHost = 'http://esp32.local';
+  final String baseHost = 'http://192.168.0.11';
 
   Future<Uint8List?> getStill() async {
     final url = Uri.parse('$baseHost/capture?_cb=${DateTime.now().millisecondsSinceEpoch}');
