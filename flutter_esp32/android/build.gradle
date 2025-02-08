@@ -7,7 +7,7 @@ buildscript {
         // Ažuriraj verziju Android Gradle Plugin-a na 8.2.1 ili noviju
         classpath 'com.android.tools.build:gradle:8.2.1'
         classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.21' 
-        // Dodaj ostale zavisnosti ako postoje
+        classpath("com.google.android.libraries.mapsplatform.secrets-gradle-plugin:secrets-gradle-plugin:2.0.1")
     }
 }
 

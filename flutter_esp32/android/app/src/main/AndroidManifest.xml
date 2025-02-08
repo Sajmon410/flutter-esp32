@@ -1,11 +1,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+   
     <application
         android:label="flutter_esp32"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <meta-data
         android:name="com.google.android.geo.API_KEY"
-        android:value="AIzaSyB8EePaEDrKaJD0NTScXFjFNFumsB08RKM" />
+        android:value="AIzaSyAy_7GGqEIroYsAN1f60-lun8o0Jh9-Wbc" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
