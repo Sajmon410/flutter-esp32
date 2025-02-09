@@ -44,6 +44,7 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 **/AndroidManifest.xml
+android/app/src/main/AndroidManifest.xml
 
 # Exclude the iOS AppDelegate file containing sensitive information
 ios/Runner/AppDelegate.swift
