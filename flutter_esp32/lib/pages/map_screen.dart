@@ -26,7 +26,7 @@ class _MapScreenState extends State<MapScreen> {
 
   void addCustomIcon() {
     gmaps.BitmapDescriptor.fromAssetImage(
-      const ImageConfiguration(size: Size(50, 100)),
+      const ImageConfiguration(devicePixelRatio: 1.0),
       "assets/gps.png",
     ).then((icon) {
       setState(() {
@@ -206,6 +206,7 @@ class _MapScreenState extends State<MapScreen> {
       appBar: AppBar(
         title: const Text('Photo Location', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.deepPurple,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Stack(
         children: [
