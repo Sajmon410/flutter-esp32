@@ -8,6 +8,6 @@ Better UI : done <br />
 Pins : done  <br />
 Info Window GoogleMaps: done <br /> 
 Local DataBase for Photos: done <br />
-Broadcast ESP32: done <br />
+Broadcast ESP32: Working only on iOS but not on Andorid <br />
 --
 
