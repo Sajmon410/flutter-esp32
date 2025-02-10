@@ -26,7 +26,7 @@ class _MapScreenState extends State<MapScreen> {
 
   void addCustomIcon() {
     gmaps.BitmapDescriptor.fromAssetImage(
-      const ImageConfiguration(devicePixelRatio: 1.0),
+      const ImageConfiguration(size: Size(50, 100)),
       "assets/gps.png",
     ).then((icon) {
       setState(() {
@@ -220,7 +220,7 @@ class _MapScreenState extends State<MapScreen> {
           ),
           CustomInfoWindow(
             controller: _customInfoWindowController,
-            height: 250,
+            height: 258,
             width: 200,
             offset: 50,
           ),
