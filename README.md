@@ -5,9 +5,9 @@ Save Photo : done <br />
 GPS location : done  <br />
 Google Map : done <br />
 Better UI : done <br />
-Pins : done  <br />
 Info Window GoogleMaps: done <br /> 
 Local DataBase for Photos: done <br />
+Pins : Perfect size on IOS but on Android too Small  <br />
 Broadcast ESP32: Working only on iOS but not on Andorid <br />
 --
 
