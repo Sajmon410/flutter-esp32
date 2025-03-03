@@ -7,7 +7,7 @@ Google Map : done <br />
 Better UI : done <br />
 Info Window GoogleMaps: done <br /> 
 Local DataBase for Photos: done <br />
-Pins : Perfect size on IOS but on Android too Small  <br />
+Custon Pin : Perfect size on IOS but on Android too Small  <br />
 Broadcast ESP32: Working only on iOS but not on Andorid <br />
 --
 
