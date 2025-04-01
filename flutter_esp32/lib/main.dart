@@ -34,7 +34,7 @@ class CameraControl {
   Future<Uint8List?> getStill() async {
     final url = Uri.parse('$baseHost/capture?_cb=${DateTime.now().millisecondsSinceEpoch}');
     try {
-      final response = await http.get(url).timeout(const Duration(seconds: 5));
+      final response = await http.get(url).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         return response.bodyBytes;
       } else {
