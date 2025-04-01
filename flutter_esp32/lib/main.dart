@@ -216,7 +216,7 @@ class _CameraScreenState extends State<CameraScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Photo saved to gallery!')),
+          const SnackBar(content: Text('Photo saved to Gallery and added to Map!')),
         );
       }
         } catch (e) {
