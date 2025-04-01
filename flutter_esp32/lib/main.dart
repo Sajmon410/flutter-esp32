@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
 
 // Kamera kontrola
 class CameraControl {
-  final String baseHost = 'http://esp32.local';
+  final String baseHost = 'http://192.168.1.200';
 
   Future<Uint8List?> getStill() async {
     final url = Uri.parse('$baseHost/capture?_cb=${DateTime.now().millisecondsSinceEpoch}');
@@ -134,6 +134,7 @@ class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _CameraScreenState createState() => _CameraScreenState();
 }
 
