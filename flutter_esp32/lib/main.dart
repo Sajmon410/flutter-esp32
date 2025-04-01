@@ -306,7 +306,7 @@ ElevatedButton(
             ElevatedButton(
               onPressed: () {
                  setState(() {
-                _isStreaming = !_isStreaming; // Prekidač za strim
+                _isStreaming = false; // Prekidač za strim
                 _imageCaptured = false; // Resetuj kada se strim prekine
               });
                 Navigator.push(
