@@ -140,6 +140,7 @@ class _CameraScreenState extends State<CameraScreen> {
   bool _isStreaming = false;
   Uint8List? _imageBytes;
   bool _imageCaptured = false;
+  
 
   loc.Location location = loc.Location();
   List<PhotoInfo> photos = [];
@@ -275,34 +276,39 @@ class _CameraScreenState extends State<CameraScreen> {
 
             const SizedBox(height: 20), // Razmak
 
-            // Dugme za start streama
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _isStreaming = !_isStreaming; // Prekidač za strim
-                });
-              },
-              child: Text(_isStreaming ? 'Stop Stream' : 'Start Stream'),
-            ),
+    
+      ElevatedButton(
+    onPressed: () {
+    setState(() {
+      _isStreaming = !_isStreaming; // Prekidač za strim
+      _imageCaptured = false; // Resetuj kada se strim prekine
+    });
+  },
+  child: Text(_isStreaming ? 'Stop Stream' : 'Start Stream'),
+),
 
-            // Dugme za hvatanje frejma sa strima
-            _isLoading
-                ? const CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: _captureFromStream,
-                    child: const Text('Take Photo'),
-                  ),
+// Prikaz indikatora učitavanja ako je potrebno
+if (_isStreaming && _isLoading)
+  const CircularProgressIndicator()
+else
+  ElevatedButton(
+    onPressed: _isStreaming ? _captureFromStream : null, // Dugme vidljivo, ali disabled ako strim nije aktivan
+    child: const Text('Take Photo'),
+  ),
 
-            // Dugme za čuvanje slike sa lokacijom
-            if (_imageCaptured)
-              ElevatedButton(
-                onPressed: () => _saveImageWithLocation(_imageBytes!),
-                child: const Text('Save Image'),
-              ),
+// Dugme za čuvanje slike sa lokacijom (vidljivo, ali disabled ako nema slike ili ako strim nije aktivan)
+ElevatedButton(
+  onPressed: (_isStreaming && _imageCaptured) ? () => _saveImageWithLocation(_imageBytes!) : null, 
+  child: const Text('Save Image'),
+),
 
             // Dugme za otvaranje mape
             ElevatedButton(
               onPressed: () {
+                 setState(() {
+                _isStreaming = !_isStreaming; // Prekidač za strim
+                _imageCaptured = false; // Resetuj kada se strim prekine
+              });
                 Navigator.push(
                   context,
                   MaterialPageRoute(
