@@ -25,6 +25,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void addCustomIcon() {
+    // ignore: deprecated_member_use
     gmaps.BitmapDescriptor.fromAssetImage(
       const ImageConfiguration(devicePixelRatio: 1.0),
       "assets/gps.png",
@@ -34,7 +35,7 @@ class _MapScreenState extends State<MapScreen> {
         _loadMarkers();
       });
     }).catchError((e) {
-      print("Error loading marker icon: $e");
+      logger.e("Error loading marker icon: $e");
     });
   }
 
@@ -64,6 +65,7 @@ class _MapScreenState extends State<MapScreen> {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
+                        // ignore: deprecated_member_use
                         color: Colors.black.withOpacity(0.2),
                         blurRadius: 6,
                         spreadRadius: 2,

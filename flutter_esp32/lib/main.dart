@@ -8,11 +8,14 @@ import 'package:image/image.dart' as img;
 import 'package:flutter_mjpeg/flutter_mjpeg.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
+import 'package:logger/logger.dart';
+
+final Logger logger = Logger();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  //ovde se dodaje funkcija za brisanje baze pri potrebi
- //await deleteDatabaseFile();
+  //ovde se odkomentarise funkcija za brisanje baze pri potrebi
+  //await deleteDatabaseFile();
   runApp(const MyApp());
 }
 
@@ -39,11 +42,11 @@ class CameraControl {
       if (response.statusCode == 200) {
         return response.bodyBytes;
       } else {
-        print('HTTP Error: ${response.statusCode}');
+        logger.d('HTTP Error: ${response.statusCode}');
         return null;
       }
     } catch (e) {
-      print('Error: $e');
+      logger.e('Error: $e');
       return null;
     }
   }
@@ -121,9 +124,9 @@ Future<void> deleteDatabaseFile()async{
   final databaseExists = await databaseFactory.databaseExists(path);
   if (databaseExists){
     await deleteDatabase(path);
-    print("Data Base Deletet Succesfully: $path");
+    logger.d("Data Base Deletet Succesfully: $path");
   }else{
-    print("Data Base doesn't exists: $path");
+    logger.d("Data Base doesn't exists: $path");
   }
 }
 
@@ -141,7 +144,6 @@ class _CameraScreenState extends State<CameraScreen> {
   bool _isStreaming = false;
   Uint8List? _imageBytes;
   bool _imageCaptured = false;
-  
 
   loc.Location location = loc.Location();
   List<PhotoInfo> photos = [];
@@ -172,10 +174,10 @@ class _CameraScreenState extends State<CameraScreen> {
           _imageCaptured = true;
         });
       } else {
-        print('Error with image.');
+        logger.e('Error with image.');
       }
     } catch (e) {
-      print("Error: $e");
+      logger.e("Error: $e");
     } finally {
       setState(() {
         _isLoading = false;
@@ -221,7 +223,7 @@ class _CameraScreenState extends State<CameraScreen> {
         );
       }
         } catch (e) {
-      print('Greška: $e');
+      logger.e('Greška: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Error while taking')),
@@ -229,7 +231,6 @@ class _CameraScreenState extends State<CameraScreen> {
       }
     }
   }
-
    @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -240,7 +241,6 @@ class _CameraScreenState extends State<CameraScreen> {
       backgroundColor: Colors.black,
       body: Container(
         color:  Colors.black,
-      
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -274,34 +274,30 @@ class _CameraScreenState extends State<CameraScreen> {
                           ),
                         ),
             ),
+                  const SizedBox(height: 20), // Razmak
+                  ElevatedButton(
+                onPressed: () {
+                setState(() {
+                  _isStreaming = !_isStreaming; // Prekidač za strim
+                  _imageCaptured = false; // Resetuj kada se strim prekine
+                });
+              },
+              child: Text(_isStreaming ? 'Stop Stream' : 'Start Stream'),
+            ),
+            // Prikaz indikatora učitavanja ako je potrebno
+            if (_isStreaming && _isLoading)
+              const CircularProgressIndicator()
+            else
+              ElevatedButton(
+                onPressed: _isStreaming ? _captureFromStream : null, // Dugme vidljivo, ali disabled ako strim nije aktivan
+                child: const Text('Take Photo'),
+              ),
 
-            const SizedBox(height: 20), // Razmak
-
-    
-      ElevatedButton(
-    onPressed: () {
-    setState(() {
-      _isStreaming = !_isStreaming; // Prekidač za strim
-      _imageCaptured = false; // Resetuj kada se strim prekine
-    });
-  },
-  child: Text(_isStreaming ? 'Stop Stream' : 'Start Stream'),
-),
-
-// Prikaz indikatora učitavanja ako je potrebno
-if (_isStreaming && _isLoading)
-  const CircularProgressIndicator()
-else
-  ElevatedButton(
-    onPressed: _isStreaming ? _captureFromStream : null, // Dugme vidljivo, ali disabled ako strim nije aktivan
-    child: const Text('Take Photo'),
-  ),
-
-// Dugme za čuvanje slike sa lokacijom (vidljivo, ali disabled ako nema slike ili ako strim nije aktivan)
-ElevatedButton(
-  onPressed: (_isStreaming && _imageCaptured) ? () => _saveImageWithLocation(_imageBytes!) : null, 
-  child: const Text('Save Image'),
-),
+            // Dugme za čuvanje slike sa lokacijom (vidljivo, ali disabled ako nema slike ili ako strim nije aktivan)
+            ElevatedButton(
+              onPressed: (_isStreaming && _imageCaptured) ? () => _saveImageWithLocation(_imageBytes!) : null, 
+              child: const Text('Save Image'),
+            ),
 
             // Dugme za otvaranje mape
             ElevatedButton(
