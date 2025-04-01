@@ -12,6 +12,7 @@ import 'package:path/path.dart' as p;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   //ovde se dodaje funkcija za brisanje baze pri potrebi
+ //await deleteDatabaseFile();
   runApp(const MyApp());
 }
 
@@ -113,18 +114,18 @@ Future<List<PhotoInfo>> loadPhotosFromDatabase() async {
 }
 
 //funkcija za brisanje cele baze
-// Future<void> deleteDatabaseFile()async{
-//   final dbPath = await getDatabasesPath();
-//   final path = p.join(dbPath, 'photos.db');
+Future<void> deleteDatabaseFile()async{
+  final dbPath = await getDatabasesPath();
+  final path = p.join(dbPath, 'photos.db');
 
-//   final databaseExists = await databaseFactory.databaseExists(path);
-//   if (databaseExists){
-//     await deleteDatabase(path);
-//     print("Data Base Deletet Succesfully: $path");
-//   }else{
-//     print("Data Base doesn't exists: $path");
-//   }
-// }
+  final databaseExists = await databaseFactory.databaseExists(path);
+  if (databaseExists){
+    await deleteDatabase(path);
+    print("Data Base Deletet Succesfully: $path");
+  }else{
+    print("Data Base doesn't exists: $path");
+  }
+}
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
