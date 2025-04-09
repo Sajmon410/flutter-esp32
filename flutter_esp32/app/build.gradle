@@ -1,5 +1,5 @@
 plugins {
-    id 'org.jetbrains.kotlin.jvm' // **Izbaci verziju**
+    id 'org.jetbrains.kotlin.jvm' 
     id 'application'
 }
 
@@ -8,16 +8,16 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1' // Ručno dodaj JUnit verziju
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1' 
 
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    implementation 'com.google.guava:guava:31.1-jre' // Ručno dodaj Guava verziju
+    implementation 'com.google.guava:guava:31.1-jre'
 }
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17) // **Postavi Java 17**
+        languageVersion = JavaLanguageVersion.of(17) 
     }
 }
 
