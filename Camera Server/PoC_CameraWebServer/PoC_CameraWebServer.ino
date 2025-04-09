@@ -18,7 +18,6 @@
  const char* pass = "simon001";
  
  
- 
  void startCameraServer();
  
  void setup() {

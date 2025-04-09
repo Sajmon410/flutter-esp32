@@ -1,0 +1,7 @@
+🛠 “Supplied javaHome is not a valid folder.”
+	1. Open Command Palette:
+Cmd + Shift + P
+	2. Type:
+Preferences: Open Settings (JSON)
+	3.	In settings.json add:
+"java.home": "/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home"
