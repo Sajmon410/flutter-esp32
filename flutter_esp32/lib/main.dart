@@ -14,7 +14,7 @@ final Logger logger = Logger();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  //ovde se odkomentarise funkcija za brisanje baze pri potrebi
+  //ovde se od komentarise funkcija za brisanje baze pri potrebi
   //await deleteDatabaseFile();
   runApp(const MyApp());
 }
