@@ -31,10 +31,8 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// Kamera kontrola
 class CameraControl {
   final String baseHost = 'http://esp32.local';
-
   Future<Uint8List?> getStill() async {
     final url = Uri.parse('$baseHost/capture?_cb=${DateTime.now().millisecondsSinceEpoch}');
     try {
@@ -52,7 +50,7 @@ class CameraControl {
   }
 }
 
-// Model za čuvanje podataka o slici
+//model za cuvanje podataka o slici
 class PhotoInfo {
   final double latitude;
   final double longitude;
@@ -80,7 +78,7 @@ class PhotoInfo {
   }
 }
 
-// Funkcije za rad sa bazom
+//funkcije za rad sa bazom
 Future<Database> initializeDatabase() async {
   final dbPath = await getDatabasesPath();
   return openDatabase(
@@ -227,7 +225,7 @@ class _CameraScreenState extends State<CameraScreen> {
       logger.e('Greška: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error while taking')),
+          const SnackBar(content: Text('Error while taking image.')),
         );
       }
     }
@@ -246,7 +244,7 @@ class _CameraScreenState extends State<CameraScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Prikaz MJPEG strima ili slike
+            // prikaz MJPEG strima ili slike
             Container(
               width: 320,
               height: 242,
@@ -267,7 +265,7 @@ class _CameraScreenState extends State<CameraScreen> {
                           Text('Stream Error: $error'),
                     )
                   : _imageBytes != null
-                      ? Image.memory(_imageBytes!) // Prikaz slike
+                      ? Image.memory(_imageBytes!) //prikaz slike
                       : const Center(
                           child: Text(
                             'No content available.\n  Click Start Stream!',
@@ -275,26 +273,26 @@ class _CameraScreenState extends State<CameraScreen> {
                           ),
                         ),
             ),
-                  const SizedBox(height: 20), // Razmak
+                  const SizedBox(height: 20),
                   ElevatedButton(
                 onPressed: () {
                 setState(() {
-                  _isStreaming = !_isStreaming; // Prekidač za strim
-                  _imageCaptured = false; // Resetuj kada se strim prekine
+                  _isStreaming = !_isStreaming; // prekidac za strim
+                  _imageCaptured = false; // resetuje kada se strim prekine
                 });
               },
               child: Text(_isStreaming ? 'Stop Stream' : 'Start Stream'),
             ),
-            // Prikaz indikatora učitavanja ako je potrebno
+            // prikaz indikatora ucitavanja ako je potrebno
             if (_isStreaming && _isLoading)
               const CircularProgressIndicator()
             else
               ElevatedButton(
-                onPressed: _isStreaming ? _captureFromStream : null, // Dugme vidljivo, ali disabled ako strim nije aktivan
+                onPressed: _isStreaming ? _captureFromStream : null, // dugme vidljivo ali disabled ako strim nije aktivan
                 child: const Text('Take Photo'),
               ),
 
-            // Dugme za čuvanje slike sa lokacijom (vidljivo, ali disabled ako nema slike ili ako strim nije aktivan)
+            // dugme za cuvanje slike sa lokacijom (vidljivo ali disabled ako nema slike ili ako strim nije aktivan)
             ElevatedButton(
               onPressed: (_isStreaming && _imageCaptured) ? () => _saveImageWithLocation(_imageBytes!) : null, 
               child: const Text('Save Image'),
@@ -304,8 +302,8 @@ class _CameraScreenState extends State<CameraScreen> {
             ElevatedButton(
               onPressed: () {
                  setState(() {
-                _isStreaming = false; // Prekidač za strim
-                _imageCaptured = false; // Resetuj kada se strim prekine
+                _isStreaming = false; // prekidac za strim
+                _imageCaptured = false; // resetuje kada se strim prekine
               });
                 Navigator.push(
                   context,

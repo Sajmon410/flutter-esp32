@@ -7,9 +7,7 @@ import 'package:photo_manager/photo_manager.dart';
 
 class MapScreen extends StatefulWidget {
   final List<PhotoInfo> photos;
-
   const MapScreen({super.key, required this.photos});
-
   @override
   State<MapScreen> createState() => _MapScreenState();
 }
@@ -45,10 +43,9 @@ class _MapScreenState extends State<MapScreen> {
   final CustomInfoWindowController _customInfoWindowController =
       CustomInfoWindowController();
 
+  // ucitavanje markera
   void _loadMarkers() {
     setState(() {
-      
-   
     for (var photo in widget.photos) {
       _markers.add(
         gmaps.Marker(
@@ -121,7 +118,7 @@ class _MapScreenState extends State<MapScreen> {
                                           child: const Text('Delete',
                                               style: TextStyle(color: Colors.white)),
                                         ),
-                                      ),                                
+                                      ),
                                   ElevatedButton(
                                     onPressed: () {
                                       _customInfoWindowController.hideInfoWindow!();
@@ -160,7 +157,7 @@ class _MapScreenState extends State<MapScreen> {
     final assetEntity = await AssetEntity.fromId(imagePath);
     return assetEntity?.file;
   }
-
+//potvrda brisanja
   void _showDeleteConfirmation(PhotoInfo photo) {
     showDialog(
       context: context,
@@ -183,7 +180,7 @@ class _MapScreenState extends State<MapScreen> {
       ),
     );
   }
-
+//brisanje slike i pina
   void _deletePhoto(PhotoInfo photo) {
     setState(() {
       _markers.removeWhere((marker) => marker.markerId.value == photo.imagePath);
