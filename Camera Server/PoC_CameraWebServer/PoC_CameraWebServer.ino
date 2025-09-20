@@ -36,12 +36,12 @@
  Serial.print(n);
  Serial.println(" networks found");
  for (int i = 0; i < n; ++i) {
- // Ispiši redni broj mreže i njen SSID (naziv)
+ // ispisi redni broj mreze i njen SSID (naziv)
  Serial.print(i + 1);
  Serial.print(": ");
  Serial.println(WiFi.SSID(i));
- // Opcionalno možeš ispisati i jačinu signala (RSSI)
- Serial.print("Jačina signala (RSSI): ");
+ // jacina signala
+ Serial.print("Jacina signala (RSSI): ");
  Serial.println(WiFi.RSSI(i));
  Serial.println("-----------------------");
  }
