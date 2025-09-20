@@ -113,7 +113,14 @@ Future<List<PhotoInfo>> loadPhotosFromDatabase() async {
     return PhotoInfo.fromMap(maps[i]);
   });
 }
-
+Uint8List? safeDecode(Uint8List bytes) {
+  try {
+    img.decodeImage(bytes); // samo pokušava da dekodira
+    return bytes; // vraća samo ako je dekodiranje uspelo
+  } catch (_) {
+    return null; // preskače loše frejmove
+  }
+}
 //funkcija za brisanje cele baze
 Future<void> deleteDatabaseFile()async{
   final dbPath = await getDatabasesPath();
@@ -183,7 +190,7 @@ class _CameraScreenState extends State<CameraScreen> {
       });
     }
   }
-
+  
   Future<void> _saveImageWithLocation(Uint8List imageBytes) async {
     try {
       final permission = await loc.Location().requestPermission();
@@ -261,11 +268,13 @@ class _CameraScreenState extends State<CameraScreen> {
                       stream: '${cameraControl.baseHost}:81/stream', // Strim
                       isLive: true,
                       timeout: const Duration(seconds: 10), // Timeout
-                      error: (context, error, stackTrace) =>
-                          Text('Stream Error: $error'),
+                      error: (context, error, stackTrace) {
+                        debugPrint("Stream error: $error");
+                        return const SizedBox.shrink();
+                      },
                     )
-                  : _imageBytes != null
-                      ? Image.memory(_imageBytes!) //prikaz slike
+                  : _imageBytes != null && safeDecode(_imageBytes!) != null
+                      ? Image.memory(_imageBytes!,gaplessPlayback: true,) //prikaz slike
                       : const Center(
                           child: Text(
                             'No content available.\n  Click Start Stream!',

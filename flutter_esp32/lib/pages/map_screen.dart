@@ -75,12 +75,18 @@ class _MapScreenState extends State<MapScreen> {
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(12),
                         ),
-                        child: Image.file(
+                        // ignore: unnecessary_null_comparison
+                        child: Image.file !=null
+                         ? Image.file(
                           imageFile,
                           width: 200,
                           height: 150,
                           fit: BoxFit.cover,
-                        ),
+                           errorBuilder: (context, error, stackTrace) {
+                             return const Icon(Icons.broken_image, size: 50, color: Colors.grey);
+                          }
+                        )
+                        : const Icon(Icons.broken_image, size: 50, color: Colors.grey),
                       ),
                       Padding(
                         padding: EdgeInsets.only(left: 0),
@@ -154,9 +160,15 @@ class _MapScreenState extends State<MapScreen> {
   
 
   Future<File?> _getImageFile(String imagePath) async {
-    final assetEntity = await AssetEntity.fromId(imagePath);
-    return assetEntity?.file;
+  final assetEntity = await AssetEntity.fromId(imagePath);
+  final file = await assetEntity?.file;
+  
+  if (file == null || !(await file.exists()) || (await file.length()) == 0) {
+    logger.e("Invalid image file: $imagePath");
+    return null;
   }
+  return file;
+}
 //potvrda brisanja
   void _showDeleteConfirmation(PhotoInfo photo) {
     showDialog(
