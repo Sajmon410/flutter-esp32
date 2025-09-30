@@ -8,6 +8,7 @@ import 'package:photo_manager/photo_manager.dart';
 class MapScreen extends StatefulWidget {
   final List<PhotoInfo> photos;
   const MapScreen({super.key, required this.photos});
+
   @override
   State<MapScreen> createState() => _MapScreenState();
 }
@@ -15,15 +16,39 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   gmaps.BitmapDescriptor markerIcon = gmaps.BitmapDescriptor.defaultMarker;
 
+  late gmaps.GoogleMapController mapController;
+  final Set<gmaps.Marker> _markers = {};
+  final CustomInfoWindowController _customInfoWindowController =
+      CustomInfoWindowController();
+
+  Map<String, List<PhotoInfo>> photosByLocation = {};
+  Map<String, int> currentPhotoIndex = {}; // Track which photo is displayed per location
+
   @override
   void initState() {
     super.initState();
+    _groupPhotosByLocation();
     addCustomIcon();
-    _loadMarkers();
+  }
+
+  void _groupPhotosByLocation() {
+    photosByLocation.clear();
+    for (var photo in widget.photos) {
+      final key = '${photo.latitude},${photo.longitude}';
+      if (!photosByLocation.containsKey(key)) {
+        photosByLocation[key] = [];
+      }
+      photosByLocation[key]!.add(photo);
+    }
+
+    // Sort each list so latest photo is first
+    photosByLocation.forEach((key, photos) {
+      photos.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      currentPhotoIndex[key] = 0;
+    });
   }
 
   void addCustomIcon() {
-    // ignore: deprecated_member_use
     gmaps.BitmapDescriptor.fromAssetImage(
       const ImageConfiguration(devicePixelRatio: 1.0),
       "assets/gps.png",
@@ -37,139 +62,165 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
-  late gmaps.GoogleMapController mapController;
-  final gmaps.LatLng _initialPosition = const gmaps.LatLng(45.2517, 19.8369);
-  final Set<gmaps.Marker> _markers = {};
-  final CustomInfoWindowController _customInfoWindowController =
-      CustomInfoWindowController();
+  Future<File?> _getImageFile(String imagePath) async {
+    final assetEntity = await AssetEntity.fromId(imagePath);
+    final file = await assetEntity?.file;
 
-  // ucitavanje markera
+    if (file == null || !(await file.exists()) || (await file.length()) == 0) {
+      logger.e("Invalid image file: $imagePath");
+      return null;
+    }
+    return file;
+  }
+
   void _loadMarkers() {
     setState(() {
-    for (var photo in widget.photos) {
-      _markers.add(
-        gmaps.Marker(
-          markerId: gmaps.MarkerId(photo.imagePath),
-          position: gmaps.LatLng(photo.latitude, photo.longitude),
-          onTap: () async {
-            final imageFile = await _getImageFile(photo.imagePath);
-            if (imageFile != null) {
-              _customInfoWindowController.addInfoWindow!(
-                Container(
-                  width: 200,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        // ignore: deprecated_member_use
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 6,
-                        spreadRadius: 2,
-                      ),
-                    ],
+      _markers.clear();
+
+      photosByLocation.forEach((key, photosAtLocation) {
+        final latestPhoto = photosAtLocation[currentPhotoIndex[key]!];
+
+        _markers.add(
+          gmaps.Marker(
+            markerId: gmaps.MarkerId(key),
+            position: gmaps.LatLng(latestPhoto.latitude, latestPhoto.longitude),
+            onTap: () => _showInfoWindowForLocation(key),
+            icon: markerIcon,
+          ),
+        );
+      });
+    });
+  }
+
+  void _showInfoWindowForLocation(String key) async {
+    final photosAtLocation = photosByLocation[key]!;
+    int index = currentPhotoIndex[key]!;
+
+    final imageFile = await _getImageFile(photosAtLocation[index].imagePath);
+
+    _customInfoWindowController.addInfoWindow!(
+      Container(
+        width: 200,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 6,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            // Image
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              child: imageFile != null
+                  ? Image.file(
+                      imageFile,
+                      width: 200,
+                      height: 150,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                    )
+                  : const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+            ),
+
+            // Timestamp
+            const SizedBox(height: 6),
+
+          // Timestamp with arrows
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Left arrow
+              IconButton(
+                icon: const Icon(Icons.arrow_left),
+                onPressed: () {
+                  setState(() {
+                    currentPhotoIndex[key] =
+                        (currentPhotoIndex[key]! - 1 + photosAtLocation.length) %
+                            photosAtLocation.length;
+                  });
+                  _showInfoWindowForLocation(key);
+                },
+              ),
+
+              // Timestamp
+              Expanded(
+                child: Text(
+                  '${photosAtLocation[index].timestamp.day}/${photosAtLocation[index].timestamp.month}/${photosAtLocation[index].timestamp.year}\n'
+                  '${photosAtLocation[index].timestamp.hour}:${photosAtLocation[index].timestamp.minute}:${photosAtLocation[index].timestamp.second}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 15),
+                ),
+              ),
+
+              // Right arrow
+              IconButton(
+                icon: const Icon(Icons.arrow_right),
+                onPressed: () {
+                  setState(() {
+                    currentPhotoIndex[key] =
+                        (currentPhotoIndex[key]! + 1) % photosAtLocation.length;
+                  });
+                  _showInfoWindowForLocation(key);
+                },
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 6),
+
+          // Delete + Close buttons
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Delete
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 5),
+                child: ElevatedButton(
+                  onPressed: () => _showDeleteConfirmation(photosAtLocation[index]),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
-                  child: Column(
-                    children: [
-                      ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(12),
-                        ),
-                        // ignore: unnecessary_null_comparison
-                        child: imageFile !=null
-                         ? Image.file(
-                          imageFile,
-                          width: 200,
-                          height: 150,
-                          fit: BoxFit.cover,
-                           errorBuilder: (context, error, stackTrace) {
-                             return const Icon(Icons.broken_image, size: 50, color: Colors.grey);
-                          }
-                        )
-                        : const Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(left: 0),
-                        child: Column(
-                          children: [
-                            Center(
-                              child: Padding(
-                                padding: const EdgeInsets.only(top: 6.0),
-                                child: Text(
-                                  '${photo.timestamp.day}/${photo.timestamp.month}/${photo.timestamp.year}\n'
-                                  '${photo.timestamp.hour}:${photo.timestamp.minute}:${photo.timestamp.second}',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                  ),
-                                ),
-                              ),
-                            ),
-                           const SizedBox(height: 4),
-                            Center(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center, // Center the buttons horizontally
-                                children: [
-                                    Padding(
-                                      padding: const EdgeInsets.only(right: 5.0),
-                                        child: ElevatedButton(
-                                          onPressed: () {
-                                            _showDeleteConfirmation(photo);
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.redAccent,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(8),
-                                            ),
-                                          ),
-                                          child: const Text('Delete',
-                                              style: TextStyle(color: Colors.white)),
-                                        ),
-                                      ),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      _customInfoWindowController.hideInfoWindow!();
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.deepPurple,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                    child: const Text('Close',
-                                        style: TextStyle(color: Colors.white)),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                  child: const Text(
+                    'Delete',
+                    style: TextStyle(color: Colors.white),
                   ),
                 ),
-                gmaps.LatLng(photo.latitude, photo.longitude),
-              );
-            }
-          },
-          icon: markerIcon,
-        ),
-      );
-    }
-     });
-  }
-  
+              ),
 
-  Future<File?> _getImageFile(String imagePath) async {
-  final assetEntity = await AssetEntity.fromId(imagePath);
-  final file = await assetEntity?.file;
-  
-  if (file == null || !(await file.exists()) || (await file.length()) == 0) {
-    logger.e("Invalid image file: $imagePath");
-    return null;
-  }
-  return file;
+              // Close
+              ElevatedButton(
+                onPressed: () => _customInfoWindowController.hideInfoWindow!(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'Close',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+        ],
+      ),
+    ),
+    gmaps.LatLng(photosAtLocation[index].latitude, photosAtLocation[index].longitude),
+  );
 }
-//potvrda brisanja
+
   void _showDeleteConfirmation(PhotoInfo photo) {
     showDialog(
       context: context,
@@ -192,11 +243,12 @@ class _MapScreenState extends State<MapScreen> {
       ),
     );
   }
-//brisanje slike i pina
+
   void _deletePhoto(PhotoInfo photo) {
     setState(() {
-      _markers.removeWhere((marker) => marker.markerId.value == photo.imagePath);
       widget.photos.remove(photo);
+      _groupPhotosByLocation();
+      _loadMarkers();
     });
     deletePhotoFromDatabase(photo.imagePath);
     _customInfoWindowController.hideInfoWindow!();
@@ -222,7 +274,7 @@ class _MapScreenState extends State<MapScreen> {
       body: Stack(
         children: [
           gmaps.GoogleMap(
-              initialCameraPosition: gmaps.CameraPosition(
+            initialCameraPosition: gmaps.CameraPosition(
               target: widget.photos.isNotEmpty
                   ? gmaps.LatLng(widget.photos.first.latitude, widget.photos.first.longitude)
                   : const gmaps.LatLng(45.2517, 19.8369),
@@ -237,7 +289,7 @@ class _MapScreenState extends State<MapScreen> {
           ),
           CustomInfoWindow(
             controller: _customInfoWindowController,
-            height: 258,
+            height: 268,
             width: 200,
             offset: 50,
           ),

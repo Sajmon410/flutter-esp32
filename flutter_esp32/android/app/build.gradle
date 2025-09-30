@@ -8,24 +8,24 @@ plugins {
 
 android {
     namespace = "com.example.flutter_esp32"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    compileSdk = 34
+    ndkVersion = "25.2.9519653" 
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17 // Postavi na Java 17
-        targetCompatibility = JavaVersion.VERSION_17 // Postavi na Java 17
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = "17" // Takođe postavi Kotlin JVM target na 17
+        jvmTarget = "17"
     }
 
     defaultConfig {
         applicationId = "com.example.flutter_esp32"
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        minSdkVersion = flutter.minSdkVersion
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0"
     }
 
     buildTypes {

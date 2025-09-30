@@ -4,7 +4,7 @@ import 'package:flutter_esp32/pages/map_picker_screen.dart';
 import 'package:flutter_esp32/pages/map_screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:photo_manager/photo_manager.dart';
-import 'package:location/location.dart' as loc;
+// import 'package:location/location.dart' as loc;
 import 'package:image/image.dart' as img;
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
@@ -53,11 +53,15 @@ class ESP32Camera {
   final String id;
   final String name;
   final String wsUrl;
+  final double lat;
+  final double lng;
 
   ESP32Camera({
     required this.id,
     required this.name,
     required this.wsUrl,
+    required this.lat,
+    required this.lng,
   });
 }
 // Model for photo data
@@ -178,7 +182,7 @@ class CameraPickerScreen extends StatelessWidget {
 }
 class _CameraScreenState extends State<CameraScreen> {
   final CameraControl cameraControl = CameraControl();
-  final loc.Location location = loc.Location();
+  // final loc.Location location = loc.Location();
   List<PhotoInfo> photos = [];
 
   bool _isStreaming = false;
@@ -188,12 +192,11 @@ class _CameraScreenState extends State<CameraScreen> {
   Uint8List? _imageBytes; // <-- new variable to hold the captured image
 
 
-  final List<ESP32Camera> cameras = [
-  ESP32Camera(id: 'cam1', name: 'ESP32 - Living Room', wsUrl: 'ws://51.20.31.17:3000'),
-  ESP32Camera(id: 'cam2', name: 'ESP32 - Backyard', wsUrl: 'ws://192.168.1.102:3000'),
-  ESP32Camera(id: 'cam3', name: 'ESP32 - Garage', wsUrl: 'ws://192.168.1.103:3000'),
+final List<ESP32Camera> cameras = [
+  ESP32Camera(id: 'cam1', name: 'ESP32 - Living Room', wsUrl: 'ws://51.20.31.17:3000', lat: 44.8176, lng: 20.4569),
+  ESP32Camera(id: 'cam2', name: 'ESP32 - Backyard', wsUrl: 'ws://192.168.1.102:3000', lat: 44.8200, lng: 20.4600),
+  ESP32Camera(id: 'cam3', name: 'ESP32 - Garage', wsUrl: 'ws://192.168.1.103:3000', lat: 44.8150, lng: 20.4500),
 ];
-
   ESP32Camera? _selectedCamera;
 
   late IOWebSocketChannel channel;
@@ -210,7 +213,8 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   void _startStream() {
-    channel = IOWebSocketChannel.connect(cameraControl.wsUrl);
+   if (_selectedCamera == null) return;
+  channel = IOWebSocketChannel.connect(_selectedCamera!.wsUrl);
 
     channel.stream.listen((message) {
       if (message is Uint8List) {
@@ -245,52 +249,44 @@ class _CameraScreenState extends State<CameraScreen> {
     }
   }
 
-  Future<void> _saveImageWithLocation(Uint8List imageBytes) async {
-    try {
-      final permission = await location.requestPermission();
-      if (permission != loc.PermissionStatus.granted) {
-        throw Exception('GPS permissions are not allowed.');
-      }
-      final loc.LocationData locationData = await location.getLocation();
+  Future<void> _saveImageAtCamera(Uint8List imageBytes, double latitude, double longitude) async {
+  try {
+    final img.Image? originalImage = img.decodeImage(imageBytes);
+    if (originalImage == null) throw Exception('Error decoding image');
 
-      final double latitude = locationData.latitude ?? 0.0;
-      final double longitude = locationData.longitude ?? 0.0;
+    final Uint8List encodedImage = Uint8List.fromList(img.encodeJpg(originalImage));
+    final AssetEntity result = await PhotoManager.editor.saveImage(
+      encodedImage,
+      filename: 'moja_slika_${DateTime.now().millisecondsSinceEpoch}.jpg',
+    );
 
-      final img.Image? originalImage = img.decodeImage(imageBytes);
-      if (originalImage == null) throw Exception('Error decoding image');
+    final newPhoto = PhotoInfo(
+      latitude: latitude,
+      longitude: longitude,
+      imagePath: result.id,
+      timestamp: DateTime.now(),
+    );
 
-      final Uint8List encodedImage = Uint8List.fromList(img.encodeJpg(originalImage));
-      final AssetEntity result = await PhotoManager.editor.saveImage(
-        encodedImage,
-        filename: 'moja_slika_${DateTime.now().millisecondsSinceEpoch}.jpg',
+    await savePhotoToDatabase(newPhoto);
+
+    setState(() {
+      photos.add(newPhoto);
+    });
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Photo saved to Gallery and added to Map!')),
       );
-
-      final newPhoto = PhotoInfo(
-        latitude: latitude,
-        longitude: longitude,
-        imagePath: result.id,
-        timestamp: DateTime.now(),
+    }
+  } catch (e) {
+    logger.e('Error: $e');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error while saving image.')),
       );
-      await savePhotoToDatabase(newPhoto);
-
-      setState(() {
-        photos.add(newPhoto);
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Photo saved to Gallery and added to Map!')),
-        );
-      }
-    } catch (e) {
-      logger.e('Error: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error while saving image.')),
-        );
-      }
     }
   }
+}
 
   @override
   void dispose() {
@@ -311,22 +307,26 @@ class _CameraScreenState extends State<CameraScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
              const SizedBox(height: 20),
-           ElevatedButton(
-          onPressed: () async {
-            final selectedCam = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const MapPickerScreen(),
-              ),
-            );
+              ElevatedButton(
+                onPressed: () async {
+                  final selectedCam = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MapPickerScreen(),
+                    ),
+                  );
 
-            if (selectedCam != null) {
-              print("Selected Camera: ${selectedCam["name"]}");
-              // Start stream or open gallery for that camera
-            }
-          },
-          child: const Text("Choose Camera"),
-           ),
+                  if (selectedCam != null && selectedCam is ESP32Camera) {
+                    setState(() {
+                      _selectedCamera = selectedCam;
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Selected: ${selectedCam.name}')),
+                    );
+                  }
+                },
+                child: const Text("Choose Camera"),
+              ),
             Container(
               width: 320,
               height: 242,
@@ -381,7 +381,13 @@ class _CameraScreenState extends State<CameraScreen> {
             ),
             const SizedBox(height: 10),
             ElevatedButton(
-              onPressed: _imageCaptured ? () => _saveImageWithLocation(_currentFrame!) : null,
+              onPressed: _imageCaptured && _selectedCamera != null
+                  ? () => _saveImageAtCamera(
+                        _currentFrame!,
+                        _selectedCamera!.lat,
+                        _selectedCamera!.lng,
+                      )
+                  : null,
               child: const Text('Save Image'),
             ),
             const SizedBox(height: 10),
