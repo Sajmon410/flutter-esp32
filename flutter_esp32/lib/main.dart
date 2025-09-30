@@ -1,21 +1,20 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter_esp32/pages/map_picker_screen.dart';
 import 'package:flutter_esp32/pages/map_screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:photo_manager/photo_manager.dart';
 import 'package:location/location.dart' as loc;
 import 'package:image/image.dart' as img;
-import 'package:flutter_mjpeg/flutter_mjpeg.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
 import 'package:logger/logger.dart';
+import 'package:web_socket_channel/io.dart';
 
 final Logger logger = Logger();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  //ovde se od komentarise funkcija za brisanje baze pri potrebi
-  //await deleteDatabaseFile();
   runApp(const MyApp());
 }
 
@@ -32,32 +31,49 @@ class MyApp extends StatelessWidget {
 }
 
 class CameraControl {
-  final String baseHost = 'http://esp32.local';
+  final String wsUrl = 'ws://51.20.31.17:3000';
+
   Future<Uint8List?> getStill() async {
-    final url = Uri.parse('$baseHost/capture?_cb=${DateTime.now().millisecondsSinceEpoch}');
+    // Optional HTTP endpoint for snapshot (if your Node.js server supports it)
+    final url = Uri.parse('http://51.20.31.17:3000/capture?_cb=${DateTime.now().millisecondsSinceEpoch}');
     try {
       final response = await http.get(url).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         return response.bodyBytes;
-      } else {
-        logger.d('HTTP Error: ${response.statusCode}');
-        return null;
       }
+      logger.d('HTTP Error: ${response.statusCode}');
+      return null;
     } catch (e) {
       logger.e('Error: $e');
       return null;
     }
   }
 }
+class ESP32Camera {
+  final String id;
+  final String name;
+  final String wsUrl;
 
-//model za cuvanje podataka o slici
+  ESP32Camera({
+    required this.id,
+    required this.name,
+    required this.wsUrl,
+  });
+}
+// Model for photo data
 class PhotoInfo {
   final double latitude;
   final double longitude;
   final String imagePath;
   final DateTime timestamp;
 
-  PhotoInfo({required this.latitude, required this.longitude, required this.imagePath, required this.timestamp,});
+  PhotoInfo({
+    required this.latitude,
+    required this.longitude,
+    required this.imagePath,
+    required this.timestamp,
+  });
+
 
   Map<String, dynamic> toMap() {
     return {
@@ -78,27 +94,17 @@ class PhotoInfo {
   }
 }
 
-//funkcije za rad sa bazom
+// Database functions
 Future<Database> initializeDatabase() async {
   final dbPath = await getDatabasesPath();
   return openDatabase(
     p.join(dbPath, 'photos.db'),
     onCreate: (db, version) {
       return db.execute(
-        'CREATE TABLE photos(id INTEGER PRIMARY KEY, latitude REAL, longitude REAL, imagePath TEXT, timestamp TEXT)',
-      );
+          'CREATE TABLE photos(id INTEGER PRIMARY KEY, latitude REAL, longitude REAL, imagePath TEXT, timestamp TEXT)');
     },
     version: 1,
   );
-}
-
-Future<void> deletePhotoFromDatabase(String imagePath) async{
-  final db = await initializeDatabase();
-  await db.delete(
-    'photos',
-    where: 'imagePath = ?',
-    whereArgs : [imagePath],
-    );
 }
 
 Future<void> savePhotoToDatabase(PhotoInfo photo) async {
@@ -106,53 +112,91 @@ Future<void> savePhotoToDatabase(PhotoInfo photo) async {
   await db.insert('photos', photo.toMap());
 }
 
+Future<void> deletePhotoFromDatabase(String imagePath) async {
+  final db = await initializeDatabase();
+  await db.delete('photos', where: 'imagePath = ?', whereArgs: [imagePath]);
+}
+
 Future<List<PhotoInfo>> loadPhotosFromDatabase() async {
   final db = await initializeDatabase();
   final maps = await db.query('photos');
-  return List.generate(maps.length, (i) {
-    return PhotoInfo.fromMap(maps[i]);
-  });
+  return List.generate(maps.length, (i) => PhotoInfo.fromMap(maps[i]));
 }
+
 Uint8List? safeDecode(Uint8List bytes) {
   try {
-    img.decodeImage(bytes); // samo pokušava da dekodira
-    return bytes; // vraća samo ako je dekodiranje uspelo
+    img.decodeImage(bytes);
+    return bytes;
   } catch (_) {
-    return null; // preskače loše frejmove
+    return null;
   }
 }
-//funkcija za brisanje cele baze
-Future<void> deleteDatabaseFile()async{
+
+Future<void> deleteDatabaseFile() async {
   final dbPath = await getDatabasesPath();
   final path = p.join(dbPath, 'photos.db');
-
-  final databaseExists = await databaseFactory.databaseExists(path);
-  if (databaseExists){
+  final exists = await databaseFactory.databaseExists(path);
+  if (exists) {
     await deleteDatabase(path);
-    logger.d("Data Base Deletet Succesfully: $path");
-  }else{
-    logger.d("Data Base doesn't exists: $path");
+    logger.d("Database deleted successfully: $path");
+  } else {
+    logger.d("Database doesn't exist: $path");
   }
 }
 
+// Camera Screen with WebSocket stream
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
-  _CameraScreenState createState() => _CameraScreenState();
+  State<CameraScreen> createState() => _CameraScreenState();
 }
 
+class CameraPickerScreen extends StatelessWidget {
+  final List<ESP32Camera> cameras;
+  const CameraPickerScreen({super.key, required this.cameras});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Select Camera")),
+      body: ListView.builder(
+        itemCount: cameras.length,
+        itemBuilder: (context, index) {
+          final cam = cameras[index];
+          return ListTile(
+            title: Text(cam.name),
+            subtitle: Text(cam.wsUrl),
+            onTap: () {
+              Navigator.pop(context, cam); // return the selected camera
+            },
+          );
+        },
+      ),
+    );
+  }
+}
 class _CameraScreenState extends State<CameraScreen> {
   final CameraControl cameraControl = CameraControl();
-
-  bool _isLoading = false;
-  bool _isStreaming = false;
-  Uint8List? _imageBytes;
-  bool _imageCaptured = false;
-
-  loc.Location location = loc.Location();
+  final loc.Location location = loc.Location();
   List<PhotoInfo> photos = [];
+
+  bool _isStreaming = false;
+  bool _imageCaptured = false;
+  bool _isLoading = false;
+  Uint8List? _currentFrame;
+  Uint8List? _imageBytes; // <-- new variable to hold the captured image
+
+
+  final List<ESP32Camera> cameras = [
+  ESP32Camera(id: 'cam1', name: 'ESP32 - Living Room', wsUrl: 'ws://51.20.31.17:3000'),
+  ESP32Camera(id: 'cam2', name: 'ESP32 - Backyard', wsUrl: 'ws://192.168.1.102:3000'),
+  ESP32Camera(id: 'cam3', name: 'ESP32 - Garage', wsUrl: 'ws://192.168.1.103:3000'),
+];
+
+  ESP32Camera? _selectedCamera;
+
+  late IOWebSocketChannel channel;
 
   @override
   void initState() {
@@ -162,50 +206,58 @@ class _CameraScreenState extends State<CameraScreen> {
 
   Future<void> _initializePhotos() async {
     final loadedPhotos = await loadPhotosFromDatabase();
-    setState(() {
-      photos = loadedPhotos;
-    });
+    setState(() => photos = loadedPhotos);
   }
 
-  Future<void> _captureFromStream() async {
-    setState(() {
-      _isLoading = true;
-    });
+  void _startStream() {
+    channel = IOWebSocketChannel.connect(cameraControl.wsUrl);
 
-    try {
-      final image = await cameraControl.getStill();
-      if (image != null) {
+    channel.stream.listen((message) {
+      if (message is Uint8List) {
         setState(() {
-          _imageBytes = image;
+          _currentFrame = message;
+          _imageBytes = message;  // <-- now _imageBytes is updated
           _imageCaptured = true;
         });
-      } else {
-        logger.e('Error with image.');
       }
-    } catch (e) {
-      logger.e("Error: $e");
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
+    }, onError: (error) {
+      logger.e("WebSocket error: $error");
+    }, onDone: () {
+      logger.d("WebSocket closed");
+      if (_isStreaming) {
+        // Try to reconnect automatically
+        Future.delayed(const Duration(seconds: 1), _startStream);
+      }
+    });
+  }
+
+  void _stopStream() {
+    _isStreaming = false;
+    channel.sink.close();
+    setState(() => _currentFrame = null);
+  }
+
+  Future<void> _captureFrame() async {
+    if (_currentFrame != null) {
+      setState(() => _imageCaptured = true);
+    } else {
+      logger.e('No frame to capture!');
     }
   }
-  
+
   Future<void> _saveImageWithLocation(Uint8List imageBytes) async {
     try {
-      final permission = await loc.Location().requestPermission();
+      final permission = await location.requestPermission();
       if (permission != loc.PermissionStatus.granted) {
         throw Exception('GPS permissions are not allowed.');
       }
-
       final loc.LocationData locationData = await location.getLocation();
+
       final double latitude = locationData.latitude ?? 0.0;
       final double longitude = locationData.longitude ?? 0.0;
 
       final img.Image? originalImage = img.decodeImage(imageBytes);
-      if (originalImage == null) {
-        throw Exception('Error while image loading.');
-      }
+      if (originalImage == null) throw Exception('Error decoding image');
 
       final Uint8List encodedImage = Uint8List.fromList(img.encodeJpg(originalImage));
       final AssetEntity result = await PhotoManager.editor.saveImage(
@@ -220,24 +272,33 @@ class _CameraScreenState extends State<CameraScreen> {
         timestamp: DateTime.now(),
       );
       await savePhotoToDatabase(newPhoto);
+
       setState(() {
         photos.add(newPhoto);
       });
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Photo saved to Gallery and added to Map!')),
         );
       }
-        } catch (e) {
-      logger.e('Greška: $e');
+    } catch (e) {
+      logger.e('Error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error while taking image.')),
+          const SnackBar(content: Text('Error while saving image.')),
         );
       }
     }
   }
-   @override
+
+  @override
+  void dispose() {
+    if (_isStreaming) channel.sink.close();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -245,75 +306,92 @@ class _CameraScreenState extends State<CameraScreen> {
         backgroundColor: Colors.deepPurple,
       ),
       backgroundColor: Colors.black,
-      body: Container(
-        color:  Colors.black,
-      child: Center(
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // prikaz MJPEG strima ili slike
+             const SizedBox(height: 20),
+           ElevatedButton(
+          onPressed: () async {
+            final selectedCam = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const MapPickerScreen(),
+              ),
+            );
+
+            if (selectedCam != null) {
+              print("Selected Camera: ${selectedCam["name"]}");
+              // Start stream or open gallery for that camera
+            }
+          },
+          child: const Text("Choose Camera"),
+           ),
             Container(
               width: 320,
               height: 242,
               decoration: BoxDecoration(
                 color: Colors.black,
-                border: Border.all(
-                  color: Colors.deepPurple,
-                  width: 3.0,
-                ),
-                borderRadius: BorderRadius.circular(5.0),
+                border: Border.all(color: Colors.deepPurple, width: 3),
+                borderRadius: BorderRadius.circular(5),
               ),
-              child: _isStreaming
-                  ? Mjpeg(
-                      stream: '${cameraControl.baseHost}:81/stream', // Strim
-                      isLive: true,
-                      timeout: const Duration(seconds: 10), // Timeout
-                      error: (context, error, stackTrace) {
-                        debugPrint("Stream error: $error");
-                        return const SizedBox.shrink();
-                      },
+              child: _currentFrame != null
+                  ? Image.memory(
+                      _currentFrame!,
+                      gaplessPlayback: true,
+                      width: 320,
+                      height: 242,
+                      fit: BoxFit.cover,
                     )
-                  : _imageBytes != null && safeDecode(_imageBytes!) != null
-                      ? Image.memory(_imageBytes!,gaplessPlayback: true,) //prikaz slike
-                      : const Center(
-                          child: Text(
-                            'No content available.\n  Click Start Stream!',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
+                  : const Center(
+                      child: Text(
+                        'No content available.\nClick Start Stream!',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
             ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                onPressed: () {
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
                 setState(() {
-                  _isStreaming = !_isStreaming; // prekidac za strim
-                  _imageCaptured = false; // resetuje kada se strim prekine
+                  _isStreaming = !_isStreaming;
+                  _imageCaptured = false;
+                  if (_isStreaming) {
+                    _startStream();
+                  } else {
+                    _stopStream();
+                  }
                 });
               },
               child: Text(_isStreaming ? 'Stop Stream' : 'Start Stream'),
             ),
-            // prikaz indikatora ucitavanja ako je potrebno
-            if (_isStreaming && _isLoading)
-              const CircularProgressIndicator()
-            else
-              ElevatedButton(
-                onPressed: _isStreaming ? _captureFromStream : null, // dugme vidljivo ali disabled ako strim nije aktivan
-                child: const Text('Take Photo'),
-              ),
-
-            // dugme za cuvanje slike sa lokacijom (vidljivo ali disabled ako nema slike ili ako strim nije aktivan)
+            const SizedBox(height: 10),
             ElevatedButton(
-              onPressed: (_isStreaming && _imageCaptured) ? () => _saveImageWithLocation(_imageBytes!) : null, 
+              onPressed: _isStreaming && _currentFrame != null
+                  ? () {
+                      setState(() {
+                        _imageCaptured = true; // mark current frame as captured
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Frame captured!')),
+                      );
+                    }
+                  : null,
+              child: const Text('Take Photo'),
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: _imageCaptured ? () => _saveImageWithLocation(_currentFrame!) : null,
               child: const Text('Save Image'),
             ),
-
-            // Dugme za otvaranje mape
+            const SizedBox(height: 10),
             ElevatedButton(
               onPressed: () {
-                 setState(() {
-                _isStreaming = false; // prekidac za strim
-                _imageCaptured = false; // resetuje kada se strim prekine
-              });
+                setState(() {
+                  _isStreaming = false;
+                  _imageCaptured = false;
+                  _stopStream();
+                });
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -326,6 +404,6 @@ class _CameraScreenState extends State<CameraScreen> {
           ],
         ),
       ),
-    ));
+    );
   }
 }

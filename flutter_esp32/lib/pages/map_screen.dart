@@ -76,7 +76,7 @@ class _MapScreenState extends State<MapScreen> {
                           top: Radius.circular(12),
                         ),
                         // ignore: unnecessary_null_comparison
-                        child: Image.file !=null
+                        child: imageFile !=null
                          ? Image.file(
                           imageFile,
                           width: 200,
@@ -222,7 +222,12 @@ class _MapScreenState extends State<MapScreen> {
       body: Stack(
         children: [
           gmaps.GoogleMap(
-            initialCameraPosition: gmaps.CameraPosition(target: _initialPosition, zoom: 10),
+              initialCameraPosition: gmaps.CameraPosition(
+              target: widget.photos.isNotEmpty
+                  ? gmaps.LatLng(widget.photos.first.latitude, widget.photos.first.longitude)
+                  : const gmaps.LatLng(45.2517, 19.8369),
+              zoom: 10,
+            ),
             markers: _markers,
             myLocationButtonEnabled: false,
             onMapCreated: (controller) {
