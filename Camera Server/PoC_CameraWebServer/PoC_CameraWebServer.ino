@@ -10,7 +10,7 @@ const char* ssid = "Sajmonet";
 const char* pass = "Simon4sbb";
 
 // WebSocket server info
-const char* ws_server_host = "";
+const char* ws_server_host = "51.20.31.17";
 const uint16_t ws_server_port = 3000;
 const char* ws_server_path = "/";
 
