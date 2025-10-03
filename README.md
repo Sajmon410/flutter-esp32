@@ -1,19 +1,47 @@
-# 🚀 Bachelor’s Thesis: Flutter App for Live ESP32 Streaming, Photo Capture, and Location Mapping
-# 📔 Description :
-###  This projet is a cross-platform mobile application built with Flutter that interfaces with an ESP32-CAM module to provide the following key features:
-###	📡 Live Video Streaming
-Stream real-time video feed from the ESP32-CAM over a local Wi-Fi network directly into the app interface.
-### 📸 Photo Capture from Stream
-Instantly capture snapshots from the live stream with a single tap.
-###	📍 GPS-Based Geotagging
-Automatically retrieve and associate the current GPS location of the mobile device with each captured photo.
-###	🗺️ Interactive Location Mapping
-Display all captured photos on an embedded map Google Maps, allowing users to visually browse images by location.
-###	💾 Local Storage Integration
-All images are saved in the device’s local storage, allowing offline access and better performance.
-# ⚙️ Platform Compatibility :
-> [!WARNING]
-> 1.  Custom map pin size: Appears correctly on iOS but is too small on Android  <br />
-> 2.  ESP32 broadcast: Works reliably on iOS, but not on Android (even with a fixed IP address)
+# 📡 Remote ESP32-CAM Monitoring System  
+**Flutter App with Cloud Integration and Location-Based Photo Management**  
+_Bachelor’s Thesis Project – 2025_
+
+## 🧭 Overview  
+This cross-platform mobile application, developed in Flutter, enables remote monitoring and control of ESP32-CAM devices via WebSocket and a cloud-hosted backend. The system supports real-time JPEG frame streaming, photo capture, local storage, and interactive map-based photo browsing. Each ESP32-CAM is assigned a fixed GPS location, allowing spatial organization of captured images.
+
+## 🔧 Architecture  
+- **ESP32-CAM**: Captures JPEG frames and transmits them over WebSocket. Each device has a predefined static location.  
+- **Cloud Backend (AWS EC2)**: Hosts the WebSocket server, enabling public access and stable communication.  
+- **Flutter Mobile App**: Provides UI for camera selection, live stream viewing, photo capture, and location-based gallery management.
+
+## 📌 Features  
+
+### 📡 Real-Time JPEG Streaming  
+Connect to any ESP32-CAM and view its live feed as a sequence of JPEG images over WebSocket.
+
+### 📸 Photo Capture  
+Capture snapshots from the live feed and store them locally with timestamp metadata.
+
+### 📍 Fixed Geolocation Assignment  
+Each camera is mapped to a static GPS coordinate, allowing location-based organization.
+
+### 🗺️ Interactive Map View  
+Browse captured photos by location. Tap on a map pin to view a gallery of images taken at that site.
+
+### 🧹 Photo Management  
+Delete unwanted or low-quality images directly from the map interface.
+
+### 💾 Local Storage + SQLite  
+Images are saved to device storage, while metadata (location, time, path) is indexed in a local SQLite database for offline access.
+
+### 🧭 Multi-Camera Support  
+Select between multiple ESP32-CAM devices via map or list interface, each with unique IP and location.
+
+## 🛠️ Technologies Used  
+- Flutter (Dart)  
+- ESP32-CAM (Arduino)  
+- WebSocket protocol  
+- AWS EC2 (Ubuntu server)
+- Node.js
+- Google Maps Flutter SDK  
+- SQLite  
+- PhotoManager & Custom Info Window plugins
+
 
  <br /> ![photo0](https://github.com/user-attachments/assets/ed1a4454-cccb-4af0-b1be-87953e3ee306)
