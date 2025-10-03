@@ -9,7 +9,7 @@ class MapPickerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<ESP32Camera> cameras = [
-    ESP32Camera(id: 'cam1', name: 'ESP32 - Living Room', wsUrl: 'ws://51.20.31.17:3000', lat: 44.8176, lng: 20.4569),
+    ESP32Camera(id: 'cam1', name: 'ESP32 - Living Room', wsUrl: 'ws://:3000', lat: 44.8176, lng: 20.4569),
     ESP32Camera(id: 'cam2', name: 'ESP32 - Backyard', wsUrl: 'ws://192.168.1.102:3000', lat: 44.8200, lng: 20.4600),
     ESP32Camera(id: 'cam3', name: 'ESP32 - Garage', wsUrl: 'ws://192.168.1.103:3000', lat: 44.8150, lng: 20.4500),
   ];

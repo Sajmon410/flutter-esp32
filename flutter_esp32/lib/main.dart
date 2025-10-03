@@ -31,11 +31,11 @@ class MyApp extends StatelessWidget {
 }
 
 class CameraControl {
-  final String wsUrl = 'ws://51.20.31.17:3000';
+  final String wsUrl = 'ws://:3000';
 
   Future<Uint8List?> getStill() async {
     // Optional HTTP endpoint for snapshot (if your Node.js server supports it)
-    final url = Uri.parse('http://51.20.31.17:3000/capture?_cb=${DateTime.now().millisecondsSinceEpoch}');
+    final url = Uri.parse('http://:3000/capture?_cb=${DateTime.now().millisecondsSinceEpoch}');
     try {
       final response = await http.get(url).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
