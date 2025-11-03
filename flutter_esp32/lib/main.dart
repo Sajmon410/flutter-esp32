@@ -31,11 +31,11 @@ class MyApp extends StatelessWidget {
 }
 
 class CameraControl {
-  final String wsUrl = 'ws://:3000';
+  final String wsUrl = 'ws://51.20.31.17:3000';
 
   Future<Uint8List?> getStill() async {
     // Optional HTTP endpoint for snapshot (if your Node.js server supports it)
-    final url = Uri.parse('http://:3000/capture?_cb=${DateTime.now().millisecondsSinceEpoch}');
+    final url = Uri.parse('http://51.20.31.17:3000/capture?_cb=${DateTime.now().millisecondsSinceEpoch}');
     try {
       final response = await http.get(url).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
@@ -307,7 +307,9 @@ final List<ESP32Camera> cameras = [
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
              const SizedBox(height: 20),
-              ElevatedButton(
+              Padding(
+              padding: const EdgeInsets.only(bottom: 20.0),
+              child: ElevatedButton(
                 onPressed: () async {
                   final selectedCam = await Navigator.push(
                     context,
@@ -327,6 +329,7 @@ final List<ESP32Camera> cameras = [
                 },
                 child: const Text("Choose Camera"),
               ),
+              ),
             Container(
               width: 320,
               height: 242,
@@ -345,7 +348,7 @@ final List<ESP32Camera> cameras = [
                     )
                   : const Center(
                       child: Text(
-                        'No content available.\nClick Start Stream!',
+                        ' No content available.\nSelect the camera and\n   Click Start Stream!',
                         style: TextStyle(color: Colors.white),
                       ),
                     ),

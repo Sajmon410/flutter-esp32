@@ -8,7 +8,10 @@
             "name": "flutter_esp32",
             "cwd": "flutter_esp32",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+            "args": [
+                 "--no-break-on-exceptions"
+]
         },
         {
             "name": "flutter_esp32 (profile mode)",
