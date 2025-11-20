@@ -1,6 +1,6 @@
 # 📡 Remote ESP32-CAM Monitoring System  
 **Flutter App with Cloud Integration and Location-Based Photo Management**  
-_Bachelor’s Thesis Project – 2025_
+_Bachelor’s Thesis Project  2025_
 
 ## 🧭 Overview  
 This cross-platform mobile application, developed in Flutter, enables remote monitoring and control of ESP32-CAM devices via WebSocket and a cloud-hosted backend. The system supports real-time JPEG frame streaming, photo capture, local storage, and interactive map-based photo browsing. Each ESP32-CAM is assigned a fixed GPS location, allowing spatial organization of captured images.
@@ -45,9 +45,10 @@ Select between multiple ESP32-CAM devices via map or list interface, each with u
 <hr/>  
 ✅ Demo: https://www.youtube.com/shorts/VMPHYj3vsZk <hr/>
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/f315b29d-cbe4-4621-a4f8-19f1227e646d" width="250"/>
-  <img src="https://github.com/user-attachments/assets/b3107c60-8160-4d96-8910-831aa8fe5c23" width="250"/>
-  <img src="https://github.com/user-attachments/assets/19548a68-9169-4c9a-a683-d55f77ce3038" width="250"/>
+  <img src="https://github.com/user-attachments/assets/f315b29d-cbe4-4621-a4f8-19f1227e646d" width="200"/>
+  <img src="https://github.com/user-attachments/assets/b3107c60-8160-4d96-8910-831aa8fe5c23" width="200"/>
+  <img src="https://github.com/user-attachments/assets/ac373a90-0b43-4fd8-b1a2-0af00b252679" width="200"/>
+  <img src="https://github.com/user-attachments/assets/19548a68-9169-4c9a-a683-d55f77ce3038" width="200"/>
 </p>
 
 
