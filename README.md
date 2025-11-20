@@ -42,7 +42,8 @@ Select between multiple ESP32-CAM devices via map or list interface, each with u
 - Google Maps Flutter SDK  
 - SQLite  
 - PhotoManager & Custom Info Window plugins
-<hr/>Demo: https://www.youtube.com/shorts/VMPHYj3vsZk <hr/>
+<hr/>  
+✅ Demo: https://www.youtube.com/shorts/VMPHYj3vsZk <hr/>
 <p align="center">
   <img src="https://github.com/user-attachments/assets/f315b29d-cbe4-4621-a4f8-19f1227e646d" width="250"/>
   <img src="https://github.com/user-attachments/assets/b3107c60-8160-4d96-8910-831aa8fe5c23" width="250"/>
